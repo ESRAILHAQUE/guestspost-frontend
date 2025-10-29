@@ -941,7 +941,7 @@ export default function BlogManagementPage() {
                         </Badge>
                       ))}
                     </div>
-                    <p className="text-gray-200 text-sm mb-2 mt-2 space-x-1">
+                    <div className="text-gray-200 text-sm mb-2 mt-2 space-x-1">
                       {showMore[post.id] ? (
                         <div
                           className="prose prose-lg max-w-none text-gray-200 leading-relaxed"
@@ -979,7 +979,7 @@ export default function BlogManagementPage() {
                         } text-gray-300 hover:text-gray-400 text-sm cursor-pointer`}>
                         view less
                       </span>
-                    </p>
+                    </div>
                   </CardContent>
                 )}
               </Card>

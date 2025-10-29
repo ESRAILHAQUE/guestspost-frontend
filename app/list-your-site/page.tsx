@@ -40,6 +40,11 @@ export default function ListYourSitePage() {
     // Load user data from Node.js backend
     const fetchUser = async () => {
       try {
+        // Check if we're in browser environment
+        if (typeof window === "undefined") {
+          return;
+        }
+
         const { endpoints } = await import("@/lib/api/client")
         const user_id = localStorage.getItem('user_id')
         if (!user_id) {

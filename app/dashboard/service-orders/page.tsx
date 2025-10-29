@@ -92,22 +92,22 @@ export default function ServiceOrdersPage() {
 
   useEffect(() => {
     // Filter orders based on search, status, and type
-    let filtered = serviceOrders;
+    let filtered = Array.isArray(serviceOrders) ? [...serviceOrders] : [];
 
-    if (searchTerm) {
+    if (searchTerm && filtered.length > 0) {
       filtered = filtered.filter(
         (order) =>
-          order.item_name.toLowerCase().includes(searchTerm.toLowerCase())
+          order?.item_name?.toLowerCase().includes(searchTerm.toLowerCase())
         // || order.id.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
-    if (filterStatus !== "all") {
-      filtered = filtered.filter((order) => order.status === filterStatus);
+    if (filterStatus !== "all" && filtered.length > 0) {
+      filtered = filtered.filter((order) => order?.status === filterStatus);
     }
 
-    if (filterType !== "all") {
-      filtered = filtered.filter((order) => order.type === filterType);
+    if (filterType !== "all" && filtered.length > 0) {
+      filtered = filtered.filter((order) => order?.type === filterType);
     }
 
     setFilteredOrders(filtered);
@@ -173,7 +173,7 @@ export default function ServiceOrdersPage() {
     }
   };
 
-  if (serviceOrders.length === 0) {
+  if (!Array.isArray(serviceOrders) || serviceOrders.length === 0) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -277,83 +277,94 @@ export default function ServiceOrdersPage() {
 
         {/* Service Orders List */}
         <div className="space-y-4">
-          {filteredOrders.map((order) => (
-            <Card
-              key={order.id}
-              className="bg-primary/5 border-primary/10 hover:bg-primary/10 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-2xl">{getServiceIcon(order.type)}</div>
-                    <div>
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="font-medium text-primary">
-                          {order.title || order.item_name}
-                        </h3>
-                        <Badge className={getServiceTypeColor(order.type)}>
-                          {getServiceTypeLabel(order.type)}
-                        </Badge>
+          {Array.isArray(filteredOrders) &&
+            filteredOrders.map((order) => (
+              <Card
+                key={order.id}
+                className="bg-primary/5 border-primary/10 hover:bg-primary/10 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-2xl">
+                        {getServiceIcon(order.type)}
                       </div>
-                      <p className="text-sm text-gray-800">Order #{order.id}</p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-800 mt-1">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {order.orderDate ||
-                            new Date(order.created_at).toLocaleDateString()}
+                      <div>
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="font-medium text-primary">
+                            {order.title || order.item_name}
+                          </h3>
+                          <Badge className={getServiceTypeColor(order.type)}>
+                            {getServiceTypeLabel(order.type)}
+                          </Badge>
                         </div>
-                        <div className="flex items-center text-blue-500">
-                          <DollarSign className="w-4 h-4 mr-1 text-primary/40" />
-                          {order.amount || order.price}
-                        </div>
-                        {order.packageDetails && (
+                        <p className="text-sm text-gray-800">
+                          Order #{order.id}
+                        </p>
+                        <div className="flex items-center space-x-4 text-sm text-gray-800 mt-1">
                           <div className="flex items-center">
-                            <Star className="w-4 h-4 mr-1" />
-                            {order.packageDetails.websites} websites
+                            <Calendar className="w-4 h-4 mr-1" />
+                            {order.orderDate ||
+                              new Date(order.created_at).toLocaleDateString()}
                           </div>
-                        )}
+                          <div className="flex items-center text-blue-500">
+                            <DollarSign className="w-4 h-4 mr-1 text-primary/40" />
+                            {order.amount || order.price}
+                          </div>
+                          {order.packageDetails && (
+                            <div className="flex items-center">
+                              <Star className="w-4 h-4 mr-1" />
+                              {order.packageDetails.websites} websites
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <div className="flex items-center space-x-3">
+                      <Badge className={getStatusColor(order?.status || "")}>
+                        {order?.status
+                          ? order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1).replace("-", " ")
+                          : ""}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-primary/30 text-primary hover:bg-primary/10 bg-transparent">
+                        View Details
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <Badge className={getStatusColor(order.status)}>
-                      {order.status.charAt(0).toUpperCase() +
-                        order.status.slice(1).replace("-", " ")}
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-primary/30 text-primary hover:bg-primary/10 bg-transparent">
-                      View Details
-                    </Button>
-                  </div>
-                </div>
-                {order.description && (
-                  <div className="mt-3 pt-3 border-t border-primary/10">
-                    <p className="text-sm text-gray-800">{order.description}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  {order.description && (
+                    <div className="mt-3 pt-3 border-t border-primary/10">
+                      <p className="text-sm text-gray-800">
+                        {order.description}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
         </div>
 
-        {filteredOrders.length === 0 && serviceOrders.length > 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-800">
-              No service orders match your search criteria
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm("");
-                setFilterStatus("all");
-                setFilterType("all");
-              }}
-              className="mt-2 border-primary/30 text-primary hover:bg-primary/10 bg-transparent">
-              Clear Filters
-            </Button>
-          </div>
-        )}
+        {filteredOrders.length === 0 &&
+          Array.isArray(serviceOrders) &&
+          serviceOrders.length > 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-800">
+                No service orders match your search criteria
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm("");
+                  setFilterStatus("all");
+                  setFilterType("all");
+                }}
+                className="mt-2 border-primary/30 text-primary hover:bg-primary/10 bg-transparent">
+                Clear Filters
+              </Button>
+            </div>
+          )}
       </div>
     </DashboardLayout>
   );
