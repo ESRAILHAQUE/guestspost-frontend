@@ -462,9 +462,12 @@ export const endpoints = {
   // Packages
   packages: {
     getPackages: (params?: Record<string, any>) =>
-      api.get<{ success: boolean; data: any[]; message: string }>("packages", {
-        params,
-      }),
+      api.get<{ success: boolean; data: any[]; message: string }>(
+        params?.status === "active" ? "packages/active" : "packages",
+        {
+          params,
+        }
+      ),
     getPackage: (id: string) =>
       api.get<{ success: boolean; data: any; message: string }>(
         `packages/${id}`
@@ -537,6 +540,10 @@ export const endpoints = {
   messages: {
     getMessages: () =>
       api.get<{ success: boolean; data: any[]; message: string }>("messages"),
+    getMyMessages: () =>
+      api.get<{ success: boolean; data: any[]; message: string }>(
+        "messages/me"
+      ),
     getMessage: (id: string) =>
       api.get<{ success: boolean; data: any; message: string }>(
         `messages/${id}`
@@ -562,6 +569,14 @@ export const endpoints = {
       api.get<{ success: boolean; data: any; message: string }>(
         "messages/stats"
       ),
+    // SSE stream endpoint - returns EventSource URL
+    getMessageStreamUrl: (lastId?: string) => {
+      const baseUrl = API_BASE_URL.replace(/\/api\/v\d+$/, "");
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
+      const lastIdParam = lastId ? `&lastId=${lastId}` : "";
+      const tokenParam = token ? `?token=${encodeURIComponent(token)}${lastId ? `&lastId=${lastId}` : ""}` : (lastId ? `?lastId=${lastId}` : "");
+      return `${baseUrl}/api/v1/messages/stream${tokenParam}`;
+    },
   },
 
   // Legacy PHP endpoints (for backward compatibility)

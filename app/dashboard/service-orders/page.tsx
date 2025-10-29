@@ -1,168 +1,177 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/components/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ShoppingBag, Search, Package, Calendar, DollarSign, ExternalLink, Star } from "lucide-react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import { endpoints } from "@/lib/api/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ShoppingBag,
+  Search,
+  Package,
+  Calendar,
+  DollarSign,
+  ExternalLink,
+  Star,
+} from "lucide-react";
+import Link from "next/link";
 
 interface ServiceOrder {
-  id: string
-  type: "guest-post-package" | "individual-service" | "combo-package" | "additional-service"
-  title: string
-  item_name : string
-  amount: number
-  price: string
-  status: "pending" | "in-progress" | "completed" | "cancelled"
-  orderDate: string
-  created_at: string
-  deliveryDate?: string
-  description?: string
+  id: string;
+  type:
+    | "guest-post-package"
+    | "individual-service"
+    | "combo-package"
+    | "additional-service";
+  title: string;
+  item_name: string;
+  amount: number;
+  price: string;
+  status: "pending" | "in-progress" | "completed" | "cancelled";
+  orderDate: string;
+  created_at: string;
+  deliveryDate?: string;
+  description?: string;
   packageDetails?: {
-    websites: number
-    drRange: string
-    features: string[]
-  }
+    websites: number;
+    drRange: string;
+    features: string[];
+  };
 }
 
 export default function ServiceOrdersPage() {
-  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([])
-  const [filteredOrders, setFilteredOrders] = useState<ServiceOrder[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterType, setFilterType] = useState("all")
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<ServiceOrder[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterType, setFilterType] = useState("all");
 
   useEffect(() => {
-    // Load service orders from localStorage
+    // Load service orders from Node.js backend
     const loadServiceOrders = async () => {
       try {
-        const user_id = localStorage.getItem('user_id')
-        // const savedOrders = localStorage.getItem("userServiceOrders")
-        const res = await fetch("https://guestpostnow.io/guestpost-backend/orders.php", {
-          method: "GET",
-        });
-        const data = await res.json();
-        const allOrders = data?.data;
-
-        // Find the order matching the specified id
-        let savedOrders: any = []
-        allOrders.filter((order: any) => {
-          if (order.user_id === user_id) {
-            savedOrders.push(order)
-          }
-        });
-        // setOrders(userOrders); // Ensure setOrders receives an array
-        // console.log(userOrders);
-        
-        if (savedOrders) {
-          const orderData = savedOrders
-          setFilteredOrders(orderData)
-          setServiceOrders(orderData)
-        } else {
-          setServiceOrders([])
-          setFilteredOrders([])
+        const user_id = localStorage.getItem("user_id");
+        if (!user_id) {
+          setServiceOrders([]);
+          return;
         }
-      } catch (error) {
-        console.error("Error loading service orders:", error)
-        setServiceOrders([])
-        setFilteredOrders([])
-      }
-    }
 
-    loadServiceOrders()
+        // Use Node.js backend to get orders by user
+        const response = await endpoints.orders.getOrdersByUser(user_id, {});
+        const allOrders = response.data || [];
+
+        // Filter orders for the current user (in case backend doesn't filter)
+        const userOrders = allOrders.filter((order: any) => {
+          return order.user_id === user_id || order.userEmail === user_id;
+        });
+
+        // Only set serviceOrders here - filtering will be handled by the other useEffect
+        setServiceOrders(userOrders && userOrders.length > 0 ? userOrders : []);
+      } catch (error) {
+        console.error("Error loading service orders:", error);
+        setServiceOrders([]);
+      }
+    };
+
+    loadServiceOrders();
 
     // Set up interval to refresh service orders every 3 seconds
-    const interval = setInterval(loadServiceOrders, 3000)
+    const interval = setInterval(loadServiceOrders, 3000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     // Filter orders based on search, status, and type
-    let filtered = serviceOrders
+    let filtered = serviceOrders;
 
     if (searchTerm) {
       filtered = filtered.filter(
         (order) =>
-          order.item_name.toLowerCase().includes(searchTerm.toLowerCase()) 
+          order.item_name.toLowerCase().includes(searchTerm.toLowerCase())
         // || order.id.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+      );
     }
 
     if (filterStatus !== "all") {
-      filtered = filtered.filter((order) => order.status === filterStatus)
+      filtered = filtered.filter((order) => order.status === filterStatus);
     }
 
     if (filterType !== "all") {
-      filtered = filtered.filter((order) => order.type === filterType)
+      filtered = filtered.filter((order) => order.type === filterType);
     }
 
-    setFilteredOrders(filtered)
-  }, [serviceOrders, searchTerm, filterStatus, filterType])
+    setFilteredOrders(filtered);
+  }, [serviceOrders, searchTerm, filterStatus, filterType]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-primary/30 bg-green-100 text-green-800"
+        return "bg-primary/30 bg-green-100 text-green-800";
       case "processing":
-        return "bg-primary/30 bg-blue-100 text-blue-800"
+        return "bg-primary/30 bg-blue-100 text-blue-800";
       case "pending":
-        return "bg-primary/30 bg-yellow-100 text-yellow-800"
+        return "bg-primary/30 bg-yellow-100 text-yellow-800";
       case "failed":
-        return "bg-primary/30 bg-red-100 text-red-800"
+        return "bg-primary/30 bg-red-100 text-red-800";
       default:
-        return "bg-primary/30 bg-gray-100 text-gray-800"
+        return "bg-primary/30 bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getServiceTypeColor = (type: string) => {
     switch (type) {
       case "guest-post-package":
-        return "bg-purple-200 text-purple-800"
+        return "bg-purple-200 text-purple-800";
       case "individual-service":
-        return "bg-blue-200 text-blue-800"
+        return "bg-blue-200 text-blue-800";
       case "combo-package":
-        return "bg-orange-200 text-orange-800"
+        return "bg-orange-200 text-orange-800";
       case "additional-service":
-        return "bg-green-200 text-green-800"
+        return "bg-green-200 text-green-800";
       default:
-        return "bg-gray-200 text-gray-800"
+        return "bg-gray-200 text-gray-800";
     }
-  }
+  };
 
   const getServiceTypeLabel = (type: string) => {
     switch (type) {
       case "guest-post-package":
-        return "Guest Post Package"
+        return "Guest Post Package";
       case "individual-service":
-        return "Individual Service"
+        return "Individual Service";
       case "combo-package":
-        return "Combo Package"
+        return "Combo Package";
       case "additional-service":
-        return "Additional Service"
+        return "Additional Service";
       default:
-        return "Service"
+        return "Service";
     }
-  }
+  };
 
   const getServiceIcon = (type: string) => {
     switch (type) {
       case "guest-post-package":
-        return "📦"
+        return "📦";
       case "individual-service":
-        return "⚡"
+        return "⚡";
       case "combo-package":
-        return "🎯"
+        return "🎯";
       case "additional-service":
-        return "🔧"
+        return "🔧";
       default:
-        return "📋"
+        return "📋";
     }
-  }
+  };
 
   if (serviceOrders.length === 0) {
     return (
@@ -170,15 +179,21 @@ export default function ServiceOrdersPage() {
         <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-primary">Service Orders</h1>
-            <p className="text-gray-800">Track your guest post packages and service orders</p>
+            <p className="text-gray-800">
+              Track your guest post packages and service orders
+            </p>
           </div>
 
           <div className="text-center py-12">
             <div className="mx-auto w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <ShoppingBag className="w-12 h-12 text-gray-800" />
             </div>
-            <h3 className="text-lg font-medium text-primary mb-2">No service orders yet</h3>
-            <p className="text-gray-800 mb-6">Start by browsing our guest post packages and services</p>
+            <h3 className="text-lg font-medium text-primary mb-2">
+              No service orders yet
+            </h3>
+            <p className="text-gray-800 mb-6">
+              Start by browsing our guest post packages and services
+            </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/dashboard/packages">
                 <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-secondary">
@@ -187,7 +202,9 @@ export default function ServiceOrdersPage() {
                 </Button>
               </Link>
               <Link href="/services">
-                <Button variant="outline" className="border-primary/30 text-primary hover:bg-primary/10 bg-primary/10">
+                <Button
+                  variant="outline"
+                  className="border-primary/30 text-primary hover:bg-primary/10 bg-primary/10">
                   View Services
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
@@ -196,7 +213,7 @@ export default function ServiceOrdersPage() {
           </div>
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
@@ -204,7 +221,9 @@ export default function ServiceOrdersPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-primary">Service Orders</h1>
-          <p className="text-gray-800">Track your guest post packages and service orders</p>
+          <p className="text-gray-800">
+            Track your guest post packages and service orders
+          </p>
         </div>
 
         {/* Filters */}
@@ -228,10 +247,16 @@ export default function ServiceOrdersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="guest-post-package">Guest Post Package</SelectItem>
-                  <SelectItem value="individual-service">Individual Service</SelectItem>
+                  <SelectItem value="guest-post-package">
+                    Guest Post Package
+                  </SelectItem>
+                  <SelectItem value="individual-service">
+                    Individual Service
+                  </SelectItem>
                   <SelectItem value="combo-package">Combo Package</SelectItem>
-                  <SelectItem value="additional-service">Additional Service</SelectItem>
+                  <SelectItem value="additional-service">
+                    Additional Service
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
@@ -253,14 +278,18 @@ export default function ServiceOrdersPage() {
         {/* Service Orders List */}
         <div className="space-y-4">
           {filteredOrders.map((order) => (
-            <Card key={order.id} className="bg-primary/5 border-primary/10 hover:bg-primary/10 transition-colors">
+            <Card
+              key={order.id}
+              className="bg-primary/5 border-primary/10 hover:bg-primary/10 transition-colors">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="text-2xl">{getServiceIcon(order.type)}</div>
                     <div>
                       <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="font-medium text-primary">{order.title || order.item_name}</h3>
+                        <h3 className="font-medium text-primary">
+                          {order.title || order.item_name}
+                        </h3>
                         <Badge className={getServiceTypeColor(order.type)}>
                           {getServiceTypeLabel(order.type)}
                         </Badge>
@@ -269,10 +298,12 @@ export default function ServiceOrdersPage() {
                       <div className="flex items-center space-x-4 text-sm text-gray-800 mt-1">
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          {order.orderDate || new Date(order.created_at).toLocaleDateString()}
+                          {order.orderDate ||
+                            new Date(order.created_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center text-blue-500">
-                          <DollarSign className="w-4 h-4 mr-1 text-primary/40" />{order.amount || order.price}
+                          <DollarSign className="w-4 h-4 mr-1 text-primary/40" />
+                          {order.amount || order.price}
                         </div>
                         {order.packageDetails && (
                           <div className="flex items-center">
@@ -285,13 +316,13 @@ export default function ServiceOrdersPage() {
                   </div>
                   <div className="flex items-center space-x-3">
                     <Badge className={getStatusColor(order.status)}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1).replace("-", " ")}
+                      {order.status.charAt(0).toUpperCase() +
+                        order.status.slice(1).replace("-", " ")}
                     </Badge>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="border-primary/30 text-primary hover:bg-primary/10 bg-transparent"
-                    >
+                      className="border-primary/30 text-primary hover:bg-primary/10 bg-transparent">
                       View Details
                     </Button>
                   </div>
@@ -308,21 +339,22 @@ export default function ServiceOrdersPage() {
 
         {filteredOrders.length === 0 && serviceOrders.length > 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-800">No service orders match your search criteria</p>
+            <p className="text-gray-800">
+              No service orders match your search criteria
+            </p>
             <Button
               variant="outline"
               onClick={() => {
-                setSearchTerm("")
-                setFilterStatus("all")
-                setFilterType("all")
+                setSearchTerm("");
+                setFilterStatus("all");
+                setFilterType("all");
               }}
-              className="mt-2 border-primary/30 text-primary hover:bg-primary/10 bg-transparent"
-            >
+              className="mt-2 border-primary/30 text-primary hover:bg-primary/10 bg-transparent">
               Clear Filters
             </Button>
           </div>
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }

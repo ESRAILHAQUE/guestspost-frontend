@@ -27,24 +27,18 @@ export function useCreateOrder() {
 
   return useMutation({
     mutationFn: async (order: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/orders.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(order),
-        }
-      );
-      return await res.text();
+      const response = await endpoints.orders.createOrder(order);
+      return response.data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.orders() });
-      if (variables.userId) {
+      if (variables.userId || variables.user_id) {
+        const userId = variables.userId || variables.user_id;
         queryClient.invalidateQueries({
-          queryKey: QueryKeys.orders(variables.userId),
+          queryKey: QueryKeys.orders(userId),
         });
         queryClient.invalidateQueries({
-          queryKey: QueryKeys.balance(variables.userId),
+          queryKey: QueryKeys.balance(userId),
         });
       }
     },
@@ -57,15 +51,11 @@ export function useUpdateOrder() {
 
   return useMutation({
     mutationFn: async (order: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/orders.php",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(order),
-        }
-      );
-      return await res.json();
+      if (!order.id) {
+        throw new Error("Order ID is required for update");
+      }
+      const response = await endpoints.orders.updateOrder(order.id, order);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.orders() });

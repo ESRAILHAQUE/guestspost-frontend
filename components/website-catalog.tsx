@@ -1,12 +1,13 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { useBalance } from "@/hooks/use-balance"
-import { PurchaseModal } from "@/components/purchase-modal"
-import { ExternalLink, Clock, Users, ShoppingCart } from "lucide-react"
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useBalance } from "@/hooks/use-balance";
+import { PurchaseModal } from "@/components/purchase-modal";
+import { ExternalLink, Clock, Users, ShoppingCart } from "lucide-react";
+import { useCurrentUser } from "@/hooks/api/useUsers";
 
 const standardWebsites = [
   {
@@ -87,7 +88,7 @@ const standardWebsites = [
     logo: "https://www.businessinsider.com/public/assets/BI/US/icon/favicon.ico",
     section: "standard",
   },
-]
+];
 
 const premiumWebsites = [
   {
@@ -168,44 +169,34 @@ const premiumWebsites = [
     logo: "https://www.bloomberg.com/favicon.ico",
     section: "premium",
   },
-]
+];
 
 export function WebsiteCatalog() {
-  const [activeTab, setActiveTab] = useState("all")
-  const [user, setUser] = useState(null)
-  const [selectedItem, setSelectedItem] = useState<any>(null)
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
-  const { balance } = useBalance()
-//  let newBalance = 0
+  const [activeTab, setActiveTab] = useState("all");
+  const [user, setUser] = useState(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const { balance } = useBalance();
+  const { data: currentUser } = useCurrentUser();
+
   useEffect(() => {
-    // if (balance) {
-    //   let parsedBalance = Math.floor(balance).toLocaleString().slice(0, 1) === "-" ? Math.floor(balance).toLocaleString().slice(1, balance.toLocaleString().length) : Math.floor(balance).toLocaleString()
-    //   newBalance = parseInt(parsedBalance);
-    // }
-     const fetchUser = async () => {
-      const res = await fetch("https://guestpostnow.io/guestpost-backend/users.php", {
-        method: "GET"
-      });
-      const userData = await res.json();
-      if (userData) {
-        const user_id = localStorage.getItem('user_id')
-        const user = userData.find((user: any) => user && user.user_email === user_id)
-        setUser(user)
-      } else {
-        setUser(null)
-      }
+    if (currentUser) {
+      setUser(currentUser);
     }
-    // Load user data
-    fetchUser();
+  }, [currentUser]);
 
-  }, []);
-
-
-  const handleBuyClick = (website: any, linkType: "dofollow" | "nofollow" = "dofollow", isPremium = false) => {
-    const price = linkType === "dofollow" ? website.doFollowPrice : website.noFollowPrice
+  const handleBuyClick = (
+    website: any,
+    linkType: "dofollow" | "nofollow" = "dofollow",
+    isPremium = false
+  ) => {
+    const price =
+      linkType === "dofollow" ? website.doFollowPrice : website.noFollowPrice;
 
     setSelectedItem({
-      name: `${website.name} Guest Post (${linkType === "dofollow" ? "Do-Follow" : "No-Follow"})`,
+      name: `${website.name} Guest Post (${
+        linkType === "dofollow" ? "Do-Follow" : "No-Follow"
+      })`,
       price: price,
       description: `Guest post placement on ${website.name} (DA ${website.da}) with ${website.traffic} monthly traffic`,
       features: [
@@ -215,14 +206,25 @@ export function WebsiteCatalog() {
         `Delivery: ${website.delivery}`,
         `Link Type: ${linkType === "dofollow" ? "Do-Follow" : "No-Follow"}`,
       ],
-    })
-    setShowPurchaseModal(true)
-  }
+    });
+    setShowPurchaseModal(true);
+  };
 
-  const WebsiteCard = ({ website, isPremium = false }: { website: any; isPremium?: boolean }) => {
-    const [selectedLinkType, setSelectedLinkType] = useState<"dofollow" | "nofollow">("dofollow")
+  const WebsiteCard = ({
+    website,
+    isPremium = false,
+  }: {
+    website: any;
+    isPremium?: boolean;
+  }) => {
+    const [selectedLinkType, setSelectedLinkType] = useState<
+      "dofollow" | "nofollow"
+    >("dofollow");
 
-    const currentPrice = selectedLinkType === "dofollow" ? website.doFollowPrice : website.noFollowPrice
+    const currentPrice =
+      selectedLinkType === "dofollow"
+        ? website.doFollowPrice
+        : website.noFollowPrice;
 
     return (
       <Card className="bg-white/5 border-white/10 hover:bg-white/10 transition-all duration-300 group">
@@ -231,15 +233,23 @@ export function WebsiteCatalog() {
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-start space-x-3 flex-1">
               <img
-                src={website.logo || "/placeholder.svg?height=32&width=32&text=" + website.name.charAt(0)}
+                src={
+                  website.logo ||
+                  "/placeholder.svg?height=32&width=32&text=" +
+                    website.name.charAt(0)
+                }
                 alt={`${website.name} logo`}
                 className="h-8 w-8 object-contain rounded flex-shrink-0 mt-1"
                 onError={(e) => {
-                  e.currentTarget.src = "/placeholder.svg?height=32&width=32&text=" + website.name.charAt(0)
+                  e.currentTarget.src =
+                    "/placeholder.svg?height=32&width=32&text=" +
+                    website.name.charAt(0);
                 }}
               />
               <div className="flex-1 min-w-0">
-                <h3 className="text-white font-semibold text-lg leading-tight mb-1">{website.name}</h3>
+                <h3 className="text-white font-semibold text-lg leading-tight mb-1">
+                  {website.name}
+                </h3>
                 <p className="text-gray-400 text-sm truncate">{website.url}</p>
               </div>
             </div>
@@ -247,8 +257,7 @@ export function WebsiteCatalog() {
               href={website.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2"
-            >
+              className="text-gray-400 hover:text-white transition-colors flex-shrink-0 ml-2">
               <ExternalLink className="w-4 h-4" />
             </a>
           </div>
@@ -256,7 +265,9 @@ export function WebsiteCatalog() {
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between text-sm">
               <span className="text-white">Domain Authority</span>
-              <Badge variant="secondary" className="bg-green-500/20 text-green-300">
+              <Badge
+                variant="secondary"
+                className="bg-green-500/20 text-green-300">
                 DA {website.da}
               </Badge>
             </div>
@@ -286,7 +297,9 @@ export function WebsiteCatalog() {
           {/* Link Type Selection - Only for Premium websites */}
           {isPremium && (
             <div className="mb-4">
-              <label className="block text-sm font-medium text-white mb-2">Link Type</label>
+              <label className="block text-sm font-medium text-white mb-2">
+                Link Type
+              </label>
               <div className="flex space-x-2">
                 <button
                   onClick={() => setSelectedLinkType("dofollow")}
@@ -294,8 +307,7 @@ export function WebsiteCatalog() {
                     selectedLinkType === "dofollow"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
+                  }`}>
                   Do-Follow
                 </button>
                 <button
@@ -304,8 +316,7 @@ export function WebsiteCatalog() {
                     selectedLinkType === "nofollow"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
+                  }`}>
                   No-Follow
                 </button>
               </div>
@@ -315,37 +326,54 @@ export function WebsiteCatalog() {
           {/* Price and Buy Button */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-2xl font-bold text-white">${currentPrice}</span>
+              <span className="text-2xl font-bold text-white">
+                ${currentPrice}
+              </span>
               <span className="text-gray-400 text-sm ml-1">USD</span>
             </div>
             <Button
-              onClick={() => handleBuyClick(website, isPremium ? selectedLinkType : "dofollow", isPremium)}
+              onClick={() =>
+                handleBuyClick(
+                  website,
+                  isPremium ? selectedLinkType : "dofollow",
+                  isPremium
+                )
+              }
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-              disabled={Math.abs(balance) < currentPrice}
-            >
+              disabled={Math.abs(balance) < currentPrice}>
               <ShoppingCart className="w-4 h-4" />
               <span>Buy Now</span>
             </Button>
           </div>
 
           {Math.abs(balance) < currentPrice && (
-            <p className="text-red-400 text-xs mt-2">Insufficient balance. Add funds to purchase.</p>
+            <p className="text-red-400 text-xs mt-2">
+              Insufficient balance. Add funds to purchase.
+            </p>
           )}
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
-  const allWebsites = [...standardWebsites, ...premiumWebsites]
+  const allWebsites = [...standardWebsites, ...premiumWebsites];
   const filteredWebsites =
-    activeTab === "all" ? allWebsites : activeTab === "standard" ? standardWebsites : premiumWebsites
+    activeTab === "all"
+      ? allWebsites
+      : activeTab === "standard"
+      ? standardWebsites
+      : premiumWebsites;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Website Catalog</h1>
-          <p className="text-gray-300 text-lg">Choose from our premium selection of high-authority websites</p>
+          <h1 className="text-4xl font-bold text-white mb-4">
+            Website Catalog
+          </h1>
+          <p className="text-gray-300 text-lg">
+            Choose from our premium selection of high-authority websites
+          </p>
         </div>
 
         {/* Tab Navigation */}
@@ -354,25 +382,28 @@ export function WebsiteCatalog() {
             <button
               onClick={() => setActiveTab("all")}
               className={`px-6 py-2 rounded-md transition-all ${
-                activeTab === "all" ? "bg-white text-gray-900 font-medium" : "text-white hover:bg-white/10"
-              }`}
-            >
+                activeTab === "all"
+                  ? "bg-white text-gray-900 font-medium"
+                  : "text-white hover:bg-white/10"
+              }`}>
               All Websites
             </button>
             <button
               onClick={() => setActiveTab("standard")}
               className={`px-6 py-2 rounded-md transition-all ${
-                activeTab === "standard" ? "bg-white text-gray-900 font-medium" : "text-white hover:bg-white/10"
-              }`}
-            >
+                activeTab === "standard"
+                  ? "bg-white text-gray-900 font-medium"
+                  : "text-white hover:bg-white/10"
+              }`}>
               Standard
             </button>
             <button
               onClick={() => setActiveTab("premium")}
               className={`px-6 py-2 rounded-md transition-all ${
-                activeTab === "premium" ? "bg-white text-gray-900 font-medium" : "text-white hover:bg-white/10"
-              }`}
-            >
+                activeTab === "premium"
+                  ? "bg-white text-gray-900 font-medium"
+                  : "text-white hover:bg-white/10"
+              }`}>
               Premium
             </button>
           </div>
@@ -381,21 +412,31 @@ export function WebsiteCatalog() {
         {/* Website Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredWebsites.map((website) => (
-            <WebsiteCard key={website.id} website={website} isPremium={website.section === "premium"} />
+            <WebsiteCard
+              key={website.id}
+              website={website}
+              isPremium={website.section === "premium"}
+            />
           ))}
         </div>
 
         {filteredWebsites.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No websites found in this category.</p>
+            <p className="text-gray-400 text-lg">
+              No websites found in this category.
+            </p>
           </div>
         )}
       </div>
 
       {/* Purchase Modal */}
       {showPurchaseModal && selectedItem && (
-        <PurchaseModal isOpen={showPurchaseModal} onClose={() => setShowPurchaseModal(false)} item={selectedItem} />
+        <PurchaseModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          item={selectedItem}
+        />
       )}
     </div>
-  )
+  );
 }

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, User, Clock, ArrowLeft } from "lucide-react"
 import Image from "next/image"
+import { endpoints } from "@/lib/api/client"
 
 interface BlogPost {
   ID: string
@@ -34,19 +35,8 @@ export default function BlogPage() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const res = await fetch("https://guestpostnow.io/guestpost-backend/posts.php", {
-          method: "GET"
-        });
-        const allPosts = await res.json();
-
-        // Only show published posts on the public blog page
-        const publishedPosts = allPosts.filter((post: BlogPost) => post.post_status === "publish" || post.post_status === 'published')
-        // const filtered = allPosts.filter((post : BlogPost) => console.log(typeof post.post_content_filtered)
-        // )
-        console.log(publishedPosts)
-
-        setPosts(publishedPosts)
-
+        const response = await endpoints.blog.getPublishedBlogPosts();
+        setPosts(response.data || []);
       } catch (error) {
         console.error("Error loading blog posts:", error)
       } finally {

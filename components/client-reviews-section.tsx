@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Quote } from "lucide-react";
 import Image from "next/image";
+import { endpoints } from "@/lib/api/client";
 
 interface Review {
   id: string;
@@ -33,18 +34,9 @@ export function ClientReviewsSection({
 
   const loadReviews = async () => {
     try {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/reviews.php",
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      const data = await res.json();
-      // console.log(data);
-      if (data) {
-        const storedReviews = data.data;
-        setReviews(storedReviews);
+      const response = await endpoints.reviews.getReviews();
+      if (response.data) {
+        setReviews(response.data);
       }
     } catch (error) {
       console.error("Error loading reviews:", error);

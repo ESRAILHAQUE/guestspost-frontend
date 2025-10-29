@@ -27,27 +27,8 @@ export function useCreateFundRequest() {
 
   return useMutation({
     mutationFn: async (request: any) => {
-      // Create user fund request
-      await fetch(
-        "https://guestpostnow.io/guestpost-backend/funds-request-add.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(request),
-        }
-      );
-
-      // Create admin fund request
-      const adminRes = await fetch(
-        "https://guestpostnow.io/guestpost-backend/admin-funds-request-add.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(request),
-        }
-      );
-      const text = await adminRes.text();
-      return JSON.parse(text);
+      const response = await endpoints.fundRequests.createFundRequest(request);
+      return response.data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.fundRequests() });
@@ -66,15 +47,12 @@ export function useUpdateFundRequest() {
 
   return useMutation({
     mutationFn: async (request: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/admin-funds-request-update.php",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(request),
-        }
-      );
-      return await res.json();
+      if (!request._id && !request.id) {
+        throw new Error("Fund request ID is required for update");
+      }
+      const requestId = request._id || request.id;
+      const response = await endpoints.fundRequests.updateFundRequest(requestId, request);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.fundRequests() });

@@ -1,49 +1,54 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PurchaseModal } from "@/components/purchase-modal"
-import { useBalance } from "@/hooks/use-balance"
-import { CheckCircle, Star, ShoppingCart, DollarSign } from "lucide-react"
-import { toast } from "sonner"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { PurchaseModal } from "@/components/purchase-modal";
+import { useBalance } from "@/hooks/use-balance";
+import { CheckCircle, Star, ShoppingCart, DollarSign } from "lucide-react";
+import { toast } from "sonner";
+import { endpoints } from "@/lib/api/client";
+import { useCurrentUser } from "@/hooks/api/useUsers";
 
 interface Package {
-  id: string
-  name: string
-  price: number
-  description: string
-  features: string[]
-  popular?: boolean
-  offer?: boolean
-  createdAt: string
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  features: string[];
+  popular?: boolean;
+  offer?: boolean;
+  createdAt: string;
 }
 
 export function PricingSection() {
-  const [packages, setPackages] = useState<Package[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedItem, setSelectedItem] = useState<any>(null)
-  const [user, setUser] = useState<any>(null)
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
-  const { balance } = useBalance()
-  // console.log("pricing section",balance);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const { balance } = useBalance();
+  const { data: user } = useCurrentUser();
 
   useEffect(() => {
     const loadPackages = async () => {
       try {
-        const res = await fetch('https://guestpostnow.io/guestpost-backend/packages.php', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        })
-        const data = await res.json();
-        // console.log(data);
-        // setPackages(data);
-        const savedPackages = data.data
-        if (savedPackages) {
-          const sortedPackages = savedPackages && savedPackages.sort((a: any, b: any) => {
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          })
-          setPackages(sortedPackages)
+        const response = await endpoints.packages.getPackages({
+          status: "active",
+        });
+        const savedPackages = response.data;
+        if (savedPackages && savedPackages.length > 0) {
+          const sortedPackages = savedPackages.sort((a: any, b: any) => {
+            return (
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          });
+          setPackages(sortedPackages);
         } else {
           // Default packages if none exist
           const defaultPackages = [
@@ -51,7 +56,8 @@ export function PricingSection() {
               id: "1",
               name: "Starter Package",
               price: 299,
-              description: "Perfect for small businesses looking to establish their online presence",
+              description:
+                "Perfect for small businesses looking to establish their online presence",
               features: [
                 "5 High-Quality Guest Posts",
                 "DA 30+ Websites",
@@ -65,7 +71,8 @@ export function PricingSection() {
               id: "2",
               name: "Professional Package",
               price: 599,
-              description: "Ideal for growing businesses that need comprehensive link building",
+              description:
+                "Ideal for growing businesses that need comprehensive link building",
               features: [
                 "10 High-Quality Guest Posts",
                 "DA 40+ Websites",
@@ -81,7 +88,8 @@ export function PricingSection() {
               id: "3",
               name: "Enterprise Package",
               price: 1199,
-              description: "For established businesses requiring maximum authority and reach",
+              description:
+                "For established businesses requiring maximum authority and reach",
               features: [
                 "20 High-Quality Guest Posts",
                 "DA 50+ Websites",
@@ -93,44 +101,23 @@ export function PricingSection() {
               ],
               createdAt: new Date().toISOString(),
             },
-          ]
-          setPackages(defaultPackages)
+          ];
+          setPackages(defaultPackages);
         }
       } catch (error) {
-        console.error("Error loading packages:", error)
+        console.error("Error loading packages:", error);
       } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadPackages()
-  }, [])
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("https://guestpostnow.io/guestpost-backend/users.php", {
-          method: "GET",
-        });
-        const data = await res.json();
-        if (data) {
-          const user_id = localStorage.getItem("user_id");
-          const userData = data.find((user: any) => user && user.user_email === user_id);
-          setUser(userData || null);
-        }
-      } catch (error) {
-        // toast.error("Failed to fetch user data:error);
-        setUser(null);
+        setIsLoading(false);
       }
     };
 
-    fetchUser();
+    loadPackages();
   }, []);
 
   const handleBuyClick = (pkg: Package) => {
     // Check if user is logged in using the correct localStorage keys
     let isLoggedIn = false;
-    let userEmail = null
+    let userEmail = null;
     if (user) {
       isLoggedIn = true;
       userEmail = user.user_email;
@@ -139,9 +126,9 @@ export function PricingSection() {
     // console.log("Buy click - Login check:", { isLoggedIn, userEmail })
 
     if (!isLoggedIn || !userEmail) {
-      alert("Please log in to make a purchase")
-      window.location.href = "/login"
-      return
+      alert("Please log in to make a purchase");
+      window.location.href = "/login";
+      return;
     }
 
     setSelectedItem({
@@ -150,9 +137,9 @@ export function PricingSection() {
       type: "guest-post-package",
       description: pkg.description,
       features: pkg.features,
-    })
-    setShowPurchaseModal(true)
-  }
+    });
+    setShowPurchaseModal(true);
+  };
 
   if (isLoading) {
     return (
@@ -161,20 +148,33 @@ export function PricingSection() {
           <div className="text-center text-primary">Loading packages...</div>
         </div>
       </section>
-    )
+    );
   }
 
   return (
     <section className="py-20 px-4">
       <div className="container mx-auto">
-
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {packages.map((pkg) => (
             <Card
               key={pkg.id}
-              className={`${Boolean(pkg.popular) ? 'mt-5 bg-gradient-to-b from-purple-200/80 from-10% via-secondary via-30% to-secondary to-60%' : 'bg-secondary'} border-primary/20 hover:bg-primary/5 transition-all duration-300 relative ${Boolean(pkg.popular) ? "ring-2 ring-purple-500/50 scale-105" : "scale-95"}  ${Boolean(pkg.offer) ? "ring-2 ring-emerald-500/50 scale-110" : "scale-95"} ${Boolean(pkg.offer) ? 'mt-5 bg-gradient-to-b from-emerald-200/80 from-10% via-secondary via-30% to-secondary to-60%' : 'bg-secondary'}`}
-            >
+              className={`${
+                Boolean(pkg.popular)
+                  ? "mt-5 bg-gradient-to-b from-purple-200/80 from-10% via-secondary via-30% to-secondary to-60%"
+                  : "bg-secondary"
+              } border-primary/20 hover:bg-primary/5 transition-all duration-300 relative ${
+                Boolean(pkg.popular)
+                  ? "ring-2 ring-purple-500/50 scale-105"
+                  : "scale-95"
+              }  ${
+                Boolean(pkg.offer)
+                  ? "ring-2 ring-emerald-500/50 scale-110"
+                  : "scale-95"
+              } ${
+                Boolean(pkg.offer)
+                  ? "mt-5 bg-gradient-to-b from-emerald-200/80 from-10% via-secondary via-30% to-secondary to-60%"
+                  : "bg-secondary"
+              }`}>
               {Boolean(pkg.popular) && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-full text-sm font-medium flex items-center">
@@ -192,12 +192,18 @@ export function PricingSection() {
                 </div>
               )}
               <CardHeader className="text-center pb-8 pt-8">
-                <CardTitle className="text-2xl font-bold text-primary mb-2">{pkg.name}</CardTitle>
+                <CardTitle className="text-2xl font-bold text-primary mb-2">
+                  {pkg.name}
+                </CardTitle>
                 <div className="text-4xl font-bold text-primary mb-4">
                   ${pkg.price}
-                  <span className="text-lg font-normal text-gray-900">/package</span>
+                  <span className="text-lg font-normal text-gray-900">
+                    /package
+                  </span>
                 </div>
-                <CardDescription className="text-gray-800 text-base">{pkg.description}</CardDescription>
+                <CardDescription className="text-gray-800 text-base">
+                  {pkg.description}
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
                 <ul className="space-y-4 mb-8">
@@ -210,11 +216,11 @@ export function PricingSection() {
                 </ul>
                 <Button
                   onClick={() => handleBuyClick(pkg)}
-                  className={`w-full py-3 text-lg font-semibold ${pkg.popular
-                    ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                    : "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
-                    }`}
-                >
+                  className={`w-full py-3 text-lg font-semibold ${
+                    pkg.popular
+                      ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                      : "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                  }`}>
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   Buy Now
                 </Button>
@@ -225,14 +231,20 @@ export function PricingSection() {
 
         <div className="text-center mt-12">
           <p className="text-primary mb-4">Need a custom solution?</p>
-          <Button variant="outline" className="border-primary/30 text-primary hover:bg-primary/5 bg-transparent">
+          <Button
+            variant="outline"
+            className="border-primary/30 text-primary hover:bg-primary/5 bg-transparent">
             Contact Sales
           </Button>
         </div>
 
         {/* Purchase Modal */}
-        <PurchaseModal isOpen={showPurchaseModal} onClose={() => setShowPurchaseModal(false)} item={selectedItem} />
+        <PurchaseModal
+          isOpen={showPurchaseModal}
+          onClose={() => setShowPurchaseModal(false)}
+          item={selectedItem}
+        />
       </div>
     </section>
-  )
+  );
 }

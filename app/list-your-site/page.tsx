@@ -37,30 +37,35 @@ export default function ListYourSitePage() {
   const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
-    // Load user data 
+    // Load user data from Node.js backend
     const fetchUser = async () => {
-      const res = await fetch("https://guestpostnow.io/guestpost-backend/users.php", {
-        method: "GET"
-      });
-      const userData = await res.json();
-      if (userData) {
-        // console.log(userData);
-
+      try {
+        const { endpoints } = await import("@/lib/api/client")
         const user_id = localStorage.getItem('user_id')
-        // console.log(user_id);
+        if (!user_id) {
+          setUser(null)
+          return
+        }
 
-        const user = userData.find((user: any) => user && user.user_email === user_id)
-        setUser(user)
-        // console.log(user);
-
-      } else {
+        // Get current user
+        const response = await endpoints.auth.getMe()
+        if (response.data && response.data.user_email === user_id) {
+          setUser({
+            ID: response.data.ID || response.data._id,
+            user_nicename: response.data.user_nicename,
+            user_email: response.data.user_email,
+            balance: response.data.balance || "0"
+          })
+        } else {
+          setUser(null)
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error)
         setUser(null)
       }
     }
 
-    // Load user data
-    fetchUser();
-
+    fetchUser()
   }, [])
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -88,19 +93,12 @@ export default function ListYourSitePage() {
         status: "pending",
       }
 
-      const res = await fetch("https://guestpostnow.io/guestpost-backend/site-submission-controller.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(submission),
-      });
-      // console.log(res);
-      
-      const data = await res.json();
+      const { endpoints } = await import("@/lib/api/client")
+      const response = await endpoints.siteSubmissions.createSiteSubmission(submission)
+      const data = response.data
       // console.log(data);
       
-      if (res.ok && data.status === "success") {
+      if (response && data) {
         // Save to localStorage for admin panel
         // const existingSubmissions = JSON.parse(localStorage.getItem("siteSubmissions") || "[]")
         // existingSubmissions.push(submission)

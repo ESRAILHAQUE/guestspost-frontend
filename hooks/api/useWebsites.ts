@@ -26,16 +26,8 @@ export function useAddWebsite() {
 
   return useMutation({
     mutationFn: async (website: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/websites-add.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(website),
-        }
-      );
-      const text = await res.text();
-      return JSON.parse(text);
+      const response = await endpoints.websites.createWebsite(website);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.websites });
@@ -49,15 +41,12 @@ export function useUpdateWebsite() {
 
   return useMutation({
     mutationFn: async (website: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/websites-update.php",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(website),
-        }
-      );
-      return await res.json();
+      if (!website._id && !website.id) {
+        throw new Error("Website ID is required for update");
+      }
+      const websiteId = website._id || website.id;
+      const response = await endpoints.websites.updateWebsite(websiteId, website);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.websites });
@@ -70,16 +59,10 @@ export function useDeleteWebsite() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/websites-delete.php",
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        }
-      );
-      return await res.json();
+    mutationFn: async (id: string | number) => {
+      const websiteId = typeof id === "number" ? String(id) : id;
+      await endpoints.websites.deleteWebsite(websiteId);
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.websites });

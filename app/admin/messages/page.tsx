@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AdminLayout } from "@/components/admin-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -106,8 +106,22 @@ export default function AdminMessages() {
       comment_approved: msg.approved || 1,
       comment_karma: 0,
     }));
-    setFilteredComments(mappedFiltered);
+    
+    // Only update if data actually changed to prevent infinite loops
+    setFilteredComments((prev) => {
+      const prevString = JSON.stringify(prev);
+      const newString = JSON.stringify(mappedFiltered);
+      if (prevString === newString) {
+        return prev; // No change, Inspect previous state
+      }
+      return mappedFiltered;
+    });
   }, [messages, searchTerm, statusFilter]);
+
+  // Memoize the status filter handler to prevent infinite loops
+  const handleStatusFilterChange = useCallback((value: string) => {
+    setStatusFilter(value);
+  }, []);
 
   // Remove duplicate useEffect - everything is in one effect above
 
@@ -266,7 +280,9 @@ export default function AdminMessages() {
                   className="pl-10 bg-white/10 border-white/20 text-white"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select
+                value={statusFilter}
+                onValueChange={handleStatusFilterChange}>
                 <SelectTrigger className="w-40 bg-white/10 border-white/20 text-white">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>

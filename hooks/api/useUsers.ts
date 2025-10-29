@@ -40,13 +40,9 @@ export function useUser(email: string | null) {
     queryKey: QueryKeys.user(email || ""),
     queryFn: async () => {
       try {
-        const res = await fetch(
-          "https://guestpostnow.io/guestpost-backend/users.php",
-          {
-            method: "GET",
-          }
-        );
-        const users = await res.json();
+        if (!email) return null;
+        const response = await endpoints.users.getUsers();
+        const users = response.data;
         return users.find((u: any) => u.user_email === email);
       } catch (error) {
         return null;
@@ -91,15 +87,12 @@ export function useUpdateUser() {
 
   return useMutation({
     mutationFn: async (userData: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/user-update.php",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(userData),
-        }
-      );
-      return await res.json();
+      if (!userData.ID && !userData._id) {
+        throw new Error("User ID is required");
+      }
+      const userId = userData.ID || userData._id;
+      const response = await endpoints.users.updateUser(userId, userData);
+      return response.data;
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.users });

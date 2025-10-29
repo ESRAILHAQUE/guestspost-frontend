@@ -25,6 +25,7 @@ import {
   MessageCircleMore,
 } from "lucide-react";
 import { toast } from "sonner";
+import { endpoints } from "@/lib/api/client";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -79,30 +80,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const handleLogout = async () => {
     if (confirm("Are you sure you want to logout?")) {
-      // Clear all user data
       try {
-        const userEmail = localStorage.getItem("user_id") || user?.user_email;
-        if (!userEmail) throw new Error("User not logged in");
-
-        const res = await fetch(
-          "https://guestpostnow.io/guestpost-backend/user-logout.php",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ID: user?.ID, balance: 0 }),
-          }
-        );
-
-        const data = await res.json();
-        if (userEmail) {
-          localStorage.removeItem("user_id");
-          localStorage.removeItem("isLoggedIn");
-          toast.success("Logged out successfully. All data has been deleted.");
-          // Redirect to home page
-          router.push("/");
-        }
+        await endpoints.auth.logout();
+        localStorage.removeItem("user_id");
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("auth-token");
+        toast.success("Logged out successfully.");
+        router.push("/");
       } catch (error: any) {
         toast.error(`Logout failed: ${error.message}`);
       }
