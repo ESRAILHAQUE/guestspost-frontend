@@ -312,7 +312,7 @@ export function UnifiedWebsiteCatalog({
 
   const WebsiteSection = ({ tabCategory }: { tabCategory: string }) => {
     const filteredWebsites = getFilteredWebsites(tabCategory);
-    const totalPages = Math.ceil((websites?.length || 0) / itemsPerPage);
+    const totalPages = Math.ceil((Array.isArray(websites) ? websites.length : 0) / itemsPerPage);
 
     return (
       <div className="bg-white">
@@ -351,7 +351,7 @@ export function UnifiedWebsiteCatalog({
                 ))}
               </Table>
             </div>
-            {filteredWebsites.length > 0 && totalPages > 1 && (
+            {Array.isArray(filteredWebsites) && filteredWebsites.length > 0 && totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-6">
                 <Button
                   onClick={() =>
@@ -362,7 +362,7 @@ export function UnifiedWebsiteCatalog({
                   Previous
                 </Button>
                 <div className="flex gap-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  {Array.from({ length: totalPages || 0 }, (_, i) => i + 1).map(
                     (page) => (
                       <Button
                         key={page}
@@ -380,7 +380,7 @@ export function UnifiedWebsiteCatalog({
                 </div>
                 <Button
                   onClick={() => setCurrentPage((prev) => prev + 1)}
-                  disabled={currentPage >= totalPages}
+                  disabled={currentPage >= (totalPages || 0)}
                   className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white">
                   Next
                 </Button>

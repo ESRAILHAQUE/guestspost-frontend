@@ -183,16 +183,16 @@ export function WebsiteCatalog() {
     //   newBalance = parseInt(parsedBalance);
     // }
      const fetchUser = async () => {
-      const res = await fetch("https://guestpostnow.io/guestpost-backend/users.php", {
-        method: "GET"
-      });
-      const userData = await res.json();
-      if (userData) {
-        const user_id = localStorage.getItem('user_id')
-        const user = userData.find((user: any) => user && user.user_email === user_id)
-        setUser(user)
-      } else {
-        setUser(null)
+      try {
+        const res = await endpoints.auth.getMe();
+        if (res?.data) {
+          setUser(res.data);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        setUser(null);
       }
     }
     // Load user data

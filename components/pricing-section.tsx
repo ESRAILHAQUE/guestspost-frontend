@@ -42,7 +42,7 @@ export function PricingSection() {
           status: "active",
         });
         const savedPackages = response.data;
-        if (savedPackages && savedPackages.length > 0) {
+        if (Array.isArray(savedPackages) && savedPackages.length > 0) {
           const sortedPackages = savedPackages.sort((a: any, b: any) => {
             return (
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

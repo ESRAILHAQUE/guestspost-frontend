@@ -40,12 +40,15 @@ export default function ServiceOrdersPage() {
     // Load service orders from localStorage
     const loadServiceOrders = async () => {
       try {
-        const user_id = localStorage.getItem('user_id')
-        // const savedOrders = localStorage.getItem("userServiceOrders")
-        const res = await fetch("https://guestpostnow.io/guestpost-backend/orders.php", {
-          method: "GET",
-        });
-        const data = await res.json();
+        const user_id = localStorage.getItem('user_id');
+        if (!user_id) {
+          setServiceOrders([]);
+          return;
+        }
+        
+        // Use Node.js backend endpoint
+        const res = await endpoints.orders.getOrdersByUser(user_id, {});
+        const data = res?.data || [];
         const allOrders = data?.data;
 
         // Find the order matching the specified id

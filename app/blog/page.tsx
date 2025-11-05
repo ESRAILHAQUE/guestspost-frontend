@@ -36,7 +36,7 @@ export default function BlogPage() {
     const loadPosts = async () => {
       try {
         const response = await endpoints.blog.getPublishedBlogPosts();
-        setPosts(response.data || []);
+        setPosts(Array.isArray(response?.data) ? response.data : []);
       } catch (error) {
         console.error("Error loading blog posts:", error)
       } finally {
@@ -115,7 +115,7 @@ export default function BlogPage() {
                   <Badge variant="secondary" className="bg-primary text-secondary">
                     {selectedPost.post_type}
                   </Badge>
-                  {Array.from(selectedPost.post_content_filtered) && Array.from(selectedPost.post_content_filtered.toString().split(',')).map((tag, index) => (
+                  {selectedPost.post_content_filtered && Array.isArray(selectedPost.post_content_filtered) && selectedPost.post_content_filtered.map((tag, index) => (
                     <Badge key={index} variant="outline" className="bg-primary text-secondary">
                       {tag}
                     </Badge>
@@ -192,7 +192,7 @@ export default function BlogPage() {
           </p>
         </div>
 
-        {posts.length === 0 ? (
+        {Array.isArray(posts) && posts.length === 0 ? (
 
           <div className="text-center py-16">
             <h2 className="text-2xl font-semibold text-primary mb-4">No Posts Yet</h2>
@@ -200,7 +200,7 @@ export default function BlogPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map((post) => (
+            {Array.isArray(posts) && posts.map((post) => (
               <Card
                 key={1}
                 className="bg-primary/10 border-gray-500/20 hover:bg-primary/5 hover:border-gray-500/40 transition-all duration-300 cursor-pointer overflow-hidden group"
@@ -262,16 +262,16 @@ export default function BlogPage() {
                     </div>
                   </div>
 
-                  {Array.from(post.post_content_filtered).length > 0 && (
+                  {Array.isArray(post.post_content_filtered) && post.post_content_filtered.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-3">
-                      {Array.from(post.post_content_filtered) && Array.from(post.post_content_filtered.toString().split(',')).slice(0, 3).map((tag, index) => (
+                      {Array.isArray(post.post_content_filtered) && post.post_content_filtered.slice(0, 3).map((tag, index) => (
                         <Badge key={index} variant="outline" className="text-xs text-secondary bg-primary">
                           {tag}
                         </Badge>
                       ))}
-                      {Array.from(post.post_content_filtered.toString().split(',')).length > 3 && (
+                      {Array.isArray(post.post_content_filtered) && post.post_content_filtered.length > 3 && (
                         <Badge variant="outline" className="text-xs text-secondary bg-primary">
-                          +{Array.from(post.post_content_filtered.toString().split(',')).length - 3}
+                          +{post.post_content_filtered.length - 3}
                           more
                         </Badge>
                       )}

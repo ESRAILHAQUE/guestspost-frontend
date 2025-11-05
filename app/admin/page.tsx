@@ -34,12 +34,25 @@ export default function AdminDashboard() {
   }
 
   useEffect(() => {
-    const isAuthenticated =
-      typeof window !== "undefined" &&
-      localStorage.getItem("admin-authenticated") === "true";
-    const adminEmail = localStorage.getItem("adminEmail");
-    if (!isAuthenticated && !adminEmail) {
-      router.push("/admin/login");
+    if (typeof window === "undefined") return;
+    
+    const userRole = localStorage.getItem("userRole");
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    const adminAuth = localStorage.getItem("admin-authenticated");
+    
+    // Check if user is logged in and has admin role
+    if (isLoggedIn !== "true" || userRole !== "admin") {
+      router.push("/login");
+      return;
+    }
+    
+    // Set admin-authenticated flag if not set but user is admin
+    if (userRole === "admin" && adminAuth !== "true") {
+      localStorage.setItem("admin-authenticated", "true");
+      const userEmail = localStorage.getItem("user_id");
+      if (userEmail) {
+        localStorage.setItem("adminEmail", userEmail);
+      }
     }
   }, [router]);
 

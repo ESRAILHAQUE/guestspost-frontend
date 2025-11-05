@@ -23,7 +23,6 @@ import {
   Package,
   MessageCircleMoreIcon,
 } from "lucide-react";
-import { useAdminAuth } from "@/hooks/use-admin-auth";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -58,47 +57,61 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Use admin authentication hook
-  const { isAuthenticated } = useAdminAuth();
-
   useEffect(() => {
-    // Check if user is authenticated as admin
-    if (!isAuthenticated) {
-      // Check localStorage for admin authentication as fallback
-      if (typeof window !== "undefined") {
-        const adminAuth = localStorage.getItem("admin-authenticated");
+    if (typeof window === "undefined") return;
 
-        if (adminAuth !== "true") {
-          // User is not authenticated as admin, redirect to admin login
-          router.push("/admin/login");
+    const checkAuth = () => {
+      const userRole = localStorage.getItem("userRole");
+      const isLoggedIn = localStorage.getItem("isLoggedIn");
+      const token = localStorage.getItem("auth-token");
+
+      // Check if user is logged in and has admin role
+      if (isLoggedIn !== "true" || !token || userRole !== "admin") {
+        console.log("Admin layout: Not authenticated as admin, redirecting to login");
+        router.push("/login");
+        return;
+      }
+
+      // Set admin-authenticated flag if not set but user is admin
+      const adminAuth = localStorage.getItem("admin-authenticated");
+      if (userRole === "admin" && adminAuth !== "true") {
+        localStorage.setItem("admin-authenticated", "true");
+        const userEmail = localStorage.getItem("user_id");
+        if (userEmail) {
+          localStorage.setItem("adminEmail", userEmail);
         }
       }
-    }
-  }, [isAuthenticated, router]);
+    };
+
+    checkAuth();
+  }, [router]);
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("admin-authenticated");
       localStorage.removeItem("admin-id");
+      localStorage.removeItem("adminEmail");
       localStorage.removeItem("auth-token");
+      localStorage.removeItem("refresh-token");
       localStorage.removeItem("user_id");
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("userRole");
-      window.location.href = "/admin/login";
+      window.location.href = "/login";
     }
   };
 
   // Show loading state while checking authentication
-  if (
-    !isAuthenticated &&
-    typeof window !== "undefined" &&
-    localStorage.getItem("admin-authenticated") !== "true"
-  ) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
-      </div>
-    );
+  if (typeof window !== "undefined") {
+    const userRole = localStorage.getItem("userRole");
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    
+    if (isLoggedIn !== "true" || userRole !== "admin") {
+      return (
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+          <div className="text-white">Checking authentication...</div>
+        </div>
+      );
+    }
   }
 
   return (

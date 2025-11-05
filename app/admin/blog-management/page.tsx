@@ -817,7 +817,7 @@ export default function BlogManagementPage() {
         </Dialog>
 
         <div className="grid gap-6">
-          {posts && posts.length === 0 ? (
+          {Array.isArray(posts) && posts.length === 0 ? (
             <Card className="bg-white/5 border-white/10">
               <CardContent className="text-center py-12">
                 <h3 className="text-xl font-semibold text-white mb-2">
@@ -929,7 +929,7 @@ export default function BlogManagementPage() {
                     </div>
                   </div>
                 </CardHeader>
-                {post.tags && post.tags.length > 0 && (
+                {Array.isArray(post.tags) && post.tags.length > 0 && (
                   <CardContent>
                     <div className="flex flex-wrap gap-1">
                       {post.tags.map((tag, index) => (

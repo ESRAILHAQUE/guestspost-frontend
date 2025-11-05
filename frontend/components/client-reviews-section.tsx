@@ -33,21 +33,16 @@ export function ClientReviewsSection({
 
   const loadReviews = async () => {
     try {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/reviews.php",
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      const data = await res.json();
-      // console.log(data);
-      if (data) {
-        const storedReviews = data.data;
-        setReviews(storedReviews);
+      // Use Node.js backend endpoint for reviews
+      const res = await endpoints.reviews.getReviews();
+      if (res?.data) {
+        setReviews(res.data);
+      } else {
+        setReviews([]);
       }
     } catch (error) {
       console.error("Error loading reviews:", error);
+      setReviews([]);
     } finally {
       setIsLoading(false);
     }

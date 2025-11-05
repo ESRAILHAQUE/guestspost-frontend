@@ -102,6 +102,8 @@ export default function SignupPage() {
       // Get user role from response and redirect accordingly
       const userRole = response.data.user.role;
       if (userRole === "admin") {
+        localStorage.setItem("admin-authenticated", "true");
+        localStorage.setItem("adminEmail", response.data.user.user_email);
         router.push("/admin");
       } else {
         router.push("/dashboard");

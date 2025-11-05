@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Send, FileText, Download, Image as ImageIcon } from 'lucide-react'
 import React, { useState, useRef, useEffect } from 'react'
+import { endpoints } from "@/lib/api/client";
 import { toast } from 'sonner'
 
 interface Message {
@@ -41,18 +42,38 @@ const UserMessages = () => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await fetch("https://guestpostnow.io/guestpost-backend/users.php", {
-                    method: "GET"
-                })
-                const userData = await response.json()
-                if (userData) {
-                    const user_id = localStorage.getItem('user_id');
-                    const foundUser = userData.find((user: any) => user.user_email === user_id)
-                    console.log('User:', foundUser)
-                    setUser(foundUser)
+                if (typeof window === "undefined") return;
+                const user_id = localStorage.getItem('user_id');
+                const token = localStorage.getItem('auth-token');
+                
+                if (!user_id || !token) { 
+                    setUser(null);
+                    // Redirect to login if no credentials
+                    window.location.href = "/login";
+                    return; 
+                }
+                
+                const res = await endpoints.auth.getMe();
+                if (res?.data && (res.data.user_email === user_id)) {
+                    setUser({
+                        ID: String(res.data.ID || res.data._id || ""),
+                        user_nicename: res.data.user_nicename,
+                        user_email: res.data.user_email,
+                        user_url: res.data.user_url || ""
+                    });
+                } else {
+                    setUser(null);
                 }
             } catch (error) {
                 console.error("Error fetching user:", error)
+                // If authentication error, clear user and redirect
+                if (error instanceof Error && error.message.includes("not authenticated")) {
+                    localStorage.removeItem("auth-token");
+                    localStorage.removeItem("user_id");
+                    window.location.href = "/login";
+                    return;
+                }
+                setUser(null);
             }
         }
         fetchUser();
@@ -64,17 +85,30 @@ const UserMessages = () => {
                 console.log("No user ID, skipping loadMessages");
                 return;
             }
+            
+            // Check if user is authenticated
+            if (typeof window === "undefined") return;
+            const token = localStorage.getItem("auth-token");
+            const isLoggedIn = localStorage.getItem("isLoggedIn");
+            
+            if (!token || isLoggedIn !== "true") {
+                console.log("No auth token or not logged in, redirecting to login");
+                window.location.href = "/login";
+                return;
+            }
+            
             try {
                 setLoading(true)
-                const res = await fetch("https://guestpostnow.io/guestpost-backend/comments.php", {
-                    method: "GET"
-                })
-                const commentsData = await res.json();
-                const allComments = commentsData.data
+                console.log("Loading messages - token:", localStorage.getItem("auth-token"));
+                const res = await endpoints.messages.getMyMessages();
+                console.log("Messages response:", res);
+                const allComments = Array.isArray(res?.data) ? res.data : [];
                 if (allComments) {
                     // console.log(user?.ID);
 
-                    const userMessages = allComments.filter((comment: any) => parseInt(comment.user_id) === parseInt(user?.ID));
+                    const userMessages = allComments.filter((comment: any) => {
+                        return String(comment.userEmail || comment.user_id) === String(user?.ID) || comment.userEmail === user?.user_email;
+                    });
                     // console.log("User Messages", userMessages);
                    
                     if(userMessages.length > 0) {
@@ -83,18 +117,18 @@ const UserMessages = () => {
 
                     if (userMessages.length > 0) {
                         setThreadId(userMessages[0].comment_ID)
-                        const content = userMessages[0].comment_content || '[]'
+                        const content = Array.isArray(userMessages[0].content) ? userMessages[0].content : (userMessages[0].comment_content || [])
                         // console.log(content);
 
-                        const normalized = content
+                        const normalized = Array.isArray(content) ? content
                             .filter((msg: any) => msg.text || msg.file)
                             .map((msg: any) => ({
                                 text: msg.text,
                                 isUser: msg.isUser,
                                 time: msg.time,
-                                comment_id: parseInt(userMessages[0].comment_ID),
+                                comment_id: parseInt(userMessages[0].comment_ID || userMessages[0].commentId || 0),
                                 ...(msg.file && { file: msg.file })
-                            }))
+                            })) : []
                             .sort((a: Message, b: Message) => new Date(a.time).getTime() - new Date(b.time).getTime())
                         // console.log("Normalized", normalized);
                         if (userHasMessage) {
@@ -117,6 +151,11 @@ const UserMessages = () => {
                 }
             } catch (error) {
                 console.error("Error fetching messages:", error)
+                // If authentication error, redirect to login
+                if (error instanceof Error && error.message.includes("not authenticated")) {
+                    window.location.href = "/login";
+                    return;
+                }
                 setLoading(false)
             }
         }
@@ -127,7 +166,7 @@ const UserMessages = () => {
         if (!userHasMessage) return;
 console.log(userHasMessage);
 
-        const evtSource = new EventSource(`https://guestpostnow.io/guestpost-backend/message-stream.php?lastId=${lastMessageId}`)
+        const evtSource = new EventSource(endpoints.messages.getMessageStreamUrl(String(lastMessageId)))
         console.log('SSE connected:', evtSource)
 
         evtSource.onmessage = function (event) {
@@ -231,41 +270,45 @@ console.log(userHasMessage);
             setMessages(prev => [...prev, newMessage])
 
             const createMessage = {
-                comment_ID: threadId,
-                user_id: parseInt(user.ID),
-                comment_author: user.user_nicename || 'Anonymous',
-                comment_author_email: user.user_email,
-                comment_author_url: user.user_url || '',
-                comment_content: inputValue,
-                isUser: true,
-                comment_type: 'thread',
-                comment_date: new Date().toISOString(),
-                comment_date_gmt: new Date().toISOString(),
-                comment_approved: 1,
-                comment_karma: 0,
-                ...(fileData && { file: fileData })
+                commentId: String(threadId || tempId),
+                userId: user.ID,
+                userName: user.user_nicename || 'Anonymous',
+                userEmail: user.user_email,
+                type: 'message',
+                content: [{
+                    text: inputValue,
+                    isUser: true,
+                    time: new Date().toISOString(),
+                    ...(fileData && { file: fileData })
+                }],
+                approved: 1,
+                date: new Date().toISOString()
             }
 
             try {
                 const method = threadId ? "PUT" : "POST"
-                const url = "https://guestpostnow.io/guestpost-backend/comments.php"
+                let response;
 
-                const res = await fetch(url, {
-                    method,
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(createMessage),
-                })
+                if (method === "POST") {
+                    response = await endpoints.messages.createMessage(createMessage);
+                } else {
+                    // For updates, we need to append to existing content
+                    const updateData = {
+                        $push: {
+                            content: createMessage.content[0]
+                        }
+                    };
+                    response = await endpoints.messages.updateMessage(String(threadId), updateData);
+                }
 
-                if (res.ok) {
-                    const data = await res.json()
+                if (response?.success) {
+                    const data = response.data;
                     console.log('Message sent:', data)
                     if (!threadId) {
-                        setThreadId(data.comment_id)
+                        setThreadId(data.comment_id || data.commentId)
                     }
                     setMessages(prev => prev.map(msg =>
-                        msg.comment_id === tempId ? { ...msg, comment_id: data.comment_id } : msg
+                        msg.comment_id === tempId ? { ...msg, comment_id: data.comment_id || data.commentId } : msg
                     ))
                     toast.success('Message Sent Successfully')
                 } else {

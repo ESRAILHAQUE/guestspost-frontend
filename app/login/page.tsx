@@ -65,8 +65,10 @@ export default function LoginPage() {
       const userRole = response.data.user.role;
       localStorage.setItem("userRole", userRole);
 
-      // Redirect based on role
+      // If admin, set admin-authenticated flag
       if (userRole === "admin") {
+        localStorage.setItem("admin-authenticated", "true");
+        localStorage.setItem("adminEmail", response.data.user.user_email);
         router.push("/admin");
       } else {
         router.push("/dashboard");
@@ -87,7 +89,7 @@ export default function LoginPage() {
               Welcome Back
             </CardTitle>
             <CardDescription className="text-center text-gray-800">
-              Sign in to your account to continue
+              Sign in to your account (User or Admin)
             </CardDescription>
           </CardHeader>
           <CardContent>

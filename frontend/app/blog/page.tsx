@@ -34,27 +34,22 @@ export default function BlogPage() {
   useEffect(() => {
     const loadPosts = async () => {
       try {
-        const res = await fetch("https://guestpostnow.io/guestpost-backend/posts.php", {
-          method: "GET"
-        });
-        const allPosts = await res.json();
-
-        // Only show published posts on the public blog page
-        const publishedPosts = allPosts.filter((post: BlogPost) => post.post_status === "publish" || post.post_status === 'published')
-        // const filtered = allPosts.filter((post : BlogPost) => console.log(typeof post.post_content_filtered)
-        // )
-        console.log(publishedPosts)
-
-        setPosts(publishedPosts)
+        // Use Node.js backend endpoint for published posts
+        const res = await endpoints.blog.getPublishedBlogPosts();
+        const publishedPosts = res?.data || [];
+        
+        console.log("Published posts:", publishedPosts);
+        setPosts(publishedPosts);
 
       } catch (error) {
-        console.error("Error loading blog posts:", error)
+        console.error("Error loading blog posts:", error);
+        setPosts([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    loadPosts()
+    loadPosts();
   }, [])
 
   // Simple markdown renderer for basic formatting

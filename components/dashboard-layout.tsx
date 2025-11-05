@@ -97,8 +97,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     router.push("/dashboard/funds");
   };
 
-  // Show loading spinner while fetching user data
-  if (isLoading) {
+  // Client-only redirect: avoid SSR "location is not defined"
+  useEffect(() => {
+    if (!isLoading && !user && typeof window !== "undefined") {
+      router.push("/login");
+    }
+  }, [isLoading, user, router]);
+
+  // Show loading or nothing while deciding redirect on client
+  if (isLoading || (!user && typeof window === "undefined")) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-400"></div>
@@ -106,9 +113,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If no user found after loading, redirect to login
-  if (!isLoading && !user) {
-    router.push("/login");
+  if (!user) {
     return null;
   }
 

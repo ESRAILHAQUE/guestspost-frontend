@@ -254,12 +254,12 @@ export default function AdminMessages() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-white">
-                {messages.length}
+                {Array.isArray(messages) ? messages.length : 0}
               </div>
               <p className="text-xs text-gray-400 mt-1">
                 {
                   messages.filter(
-                    (m: MessageType) => m.content && m.content.length > 0
+                    (m: MessageType) => m.content && Array.isArray(m.content) && m.content.length > 0
                   ).length
                 }{" "}
                 with messages

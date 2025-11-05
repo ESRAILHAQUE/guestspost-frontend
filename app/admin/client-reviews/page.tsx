@@ -163,6 +163,7 @@ export default function ClientReviewsManagement() {
   };
 
   const renderStars = (rating: number) => {
+    if (typeof rating !== 'number' || rating < 0) return null;
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}

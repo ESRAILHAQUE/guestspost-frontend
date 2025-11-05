@@ -41,12 +41,8 @@ export default function ServicePurchases() {
 
   useEffect(() => {
     const loadPurchasedServices = async () => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/orders.php",
-        {
-          method: "GET",
-        }
-      );
+      // Use Node.js backend endpoint
+      const res = await endpoints.orders.getOrders();
       const data = await res.json();
       const services = data.data;
 

@@ -173,7 +173,7 @@ const premiumWebsites = [
 
 export function WebsiteCatalog() {
   const [activeTab, setActiveTab] = useState("all");
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const { balance } = useBalance();
@@ -420,7 +420,7 @@ export function WebsiteCatalog() {
           ))}
         </div>
 
-        {filteredWebsites.length === 0 && (
+        {Array.isArray(filteredWebsites) && filteredWebsites.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-400 text-lg">
               No websites found in this category.

@@ -7,7 +7,7 @@ import Image from "next/image";
 import { endpoints } from "@/lib/api/client";
 
 interface Review {
-  id: string;
+  id?: string;
   name: string;
   company: string;
   rating: number;
@@ -35,17 +35,18 @@ export function ClientReviewsSection({
   const loadReviews = async () => {
     try {
       const response = await endpoints.reviews.getReviews();
-      if (response.data) {
-        setReviews(response.data);
-      }
+      const reviewsData = Array.isArray(response?.data) ? response.data : [];
+      setReviews(reviewsData);
     } catch (error) {
       console.error("Error loading reviews:", error);
+      setReviews([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const renderStars = (rating: number) => {
+    if (typeof rating !== 'number' || rating < 0) return null;
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
@@ -78,7 +79,7 @@ export function ClientReviewsSection({
     );
   }
 
-  if (!reviews || reviews.length === 0) {
+  if (!Array.isArray(reviews) || reviews.length === 0) {
     return null;
   }
 
@@ -99,9 +100,9 @@ export function ClientReviewsSection({
 
             {/* Reviews Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {reviews.map((review) => (
+              {reviews.map((review, index) => (
                 <Card
-                  key={review.id}
+                  key={review.id || `review-${index}`}
                   className="bg-secondary border-primary/20 backdrop-blur-sm hover:bg-primary/20 transition-all duration-300">
                   <CardContent className="p-6">
                     {/* Quote Icon */}

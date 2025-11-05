@@ -84,25 +84,21 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         const userEmail = localStorage.getItem("user_id") || user?.user_email;
         if (!userEmail) throw new Error("User not logged in");
 
-        const res = await fetch(
-          "https://guestpostnow.io/guestpost-backend/user-logout.php",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ID: user?.ID, balance: 0 }),
-          }
-        );
+        // Call Node.js logout endpoint
+        await endpoints.auth.logout();
 
-        const data = await res.json();
-        if (userEmail) {
-          localStorage.removeItem("user_id");
-          localStorage.removeItem("isLoggedIn");
-          toast.success("Logged out successfully. All data has been deleted.");
-          // Redirect to home page
-          router.push("/");
-        }
+        // Clear all local storage
+        localStorage.removeItem("user_id");
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("auth-token");
+        localStorage.removeItem("refresh-token");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("admin-authenticated");
+        localStorage.removeItem("adminEmail");
+        
+        toast.success("Logged out successfully.");
+        // Redirect to home page
+        router.push("/");
       } catch (error: any) {
         toast.error(`Logout failed: ${error.message}`);
       }

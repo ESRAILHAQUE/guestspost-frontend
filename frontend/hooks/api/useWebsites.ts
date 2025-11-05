@@ -26,16 +26,9 @@ export function useAddWebsite() {
 
   return useMutation({
     mutationFn: async (website: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/websites-add.php",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(website),
-        }
-      );
-      const text = await res.text();
-      return JSON.parse(text);
+      // Use Node.js backend endpoint
+      const res = await endpoints.websites.createWebsite(website);
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.websites });
@@ -49,15 +42,10 @@ export function useUpdateWebsite() {
 
   return useMutation({
     mutationFn: async (website: any) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/websites-update.php",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(website),
-        }
-      );
-      return await res.json();
+      // Use Node.js backend endpoint
+      const { _id, ...updateData } = website;
+      const res = await endpoints.websites.updateWebsite(_id, updateData);
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.websites });
@@ -70,16 +58,10 @@ export function useDeleteWebsite() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const res = await fetch(
-        "https://guestpostnow.io/guestpost-backend/websites-delete.php",
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id }),
-        }
-      );
-      return await res.json();
+    mutationFn: async (id: string | number) => {
+      // Use Node.js backend endpoint
+      const res = await endpoints.websites.deleteWebsite(String(id));
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.websites });

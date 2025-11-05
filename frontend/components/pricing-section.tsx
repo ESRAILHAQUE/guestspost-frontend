@@ -31,19 +31,15 @@ export function PricingSection() {
   useEffect(() => {
     const loadPackages = async () => {
       try {
-        const res = await fetch('https://guestpostnow.io/guestpost-backend/packages.php', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        })
-        const data = await res.json();
-        // console.log(data);
-        // setPackages(data);
-        const savedPackages = data.data
-        if (savedPackages) {
-          const sortedPackages = savedPackages && savedPackages.sort((a: any, b: any) => {
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          })
-          setPackages(sortedPackages)
+        // Use Node.js backend endpoint for packages
+        const res = await endpoints.packages.getPackages();
+        const savedPackages = res?.data || [];
+        
+        if (Array.isArray(savedPackages) && savedPackages.length > 0) {
+          const sortedPackages = savedPackages.sort((a: any, b: any) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
+          setPackages(sortedPackages);
         } else {
           // Default packages if none exist
           const defaultPackages = [
@@ -109,17 +105,14 @@ export function PricingSection() {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch("https://guestpostnow.io/guestpost-backend/users.php", {
-          method: "GET",
-        });
-        const data = await res.json();
-        if (data) {
-          const user_id = localStorage.getItem("user_id");
-          const userData = data.find((user: any) => user && user.user_email === user_id);
-          setUser(userData || null);
+        const res = await endpoints.auth.getMe();
+        if (res?.data) {
+          setUser(res.data);
+        } else {
+          setUser(null);
         }
       } catch (error) {
-        // toast.error("Failed to fetch user data:error);
+        console.error("Error fetching user:", error);
         setUser(null);
       }
     };
