@@ -41,27 +41,39 @@ export default function ServicePurchases() {
 
   useEffect(() => {
     const loadPurchasedServices = async () => {
-      // Use Node.js backend endpoint
-      const res = await endpoints.orders.getOrders();
-      const data = await res.json();
-      const services = data.data;
+      try {
+        // Use Node.js backend endpoint
+        const res = await endpoints.orders.getOrders();
+        const services = res?.data || [];
 
-      setFilteredPurchases(services);
-      if (services) {
-        setPurchases(services);
-        const packages = services.find(
-          (service: any) => service.type === "guest-post-package"
-        );
-        setPackages([packages]);
-        const indvidual_services = services.find(
-          (service: any) => service.type === "individual-service"
-        );
-        setIndividualServices([indvidual_services]);
-        const combo_package = services.find(
-          (service: any) => service.type === "combo-package"
-        );
-        setComboPackages(combo_package);
-        // console.log(services);
+        setFilteredPurchases(Array.isArray(services) ? services : []);
+        if (Array.isArray(services) && services.length > 0) {
+          setPurchases(services);
+          const packages = services.find(
+            (service: any) => service.type === "guest-post-package"
+          );
+          setPackages(packages ? [packages] : []);
+          const indvidual_services = services.find(
+            (service: any) => service.type === "individual-service"
+          );
+          setIndividualServices(indvidual_services ? [indvidual_services] : []);
+          const combo_package = services.find(
+            (service: any) => service.type === "combo-package"
+          );
+          setComboPackages(combo_package || null);
+        } else {
+          setPurchases([]);
+          setPackages([]);
+          setIndividualServices([]);
+          setComboPackages(null);
+        }
+      } catch (error) {
+        console.error("Error loading services:", error);
+        setFilteredPurchases([]);
+        setPurchases([]);
+        setPackages([]);
+        setIndividualServices([]);
+        setComboPackages(null);
       }
     };
     loadPurchasedServices();
@@ -71,43 +83,40 @@ export default function ServicePurchases() {
   // const purchases: any[] = []
 
   useEffect(() => {
-    const filtered_Purchases =
-      purchases &&
-      purchases.filter((purchase) => {
-        // console.log(purchase);
-
-        const matchesSearch =
-          // purchase.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          purchase.item_name?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory =
-          categoryFilter === "all" || purchase.type === categoryFilter;
-        const matchesStatus =
-          statusFilter === "all" || purchase.status === statusFilter;
-        return matchesSearch && matchesCategory && matchesStatus;
-      });
+    const filtered_Purchases = Array.isArray(purchases)
+      ? purchases.filter((purchase) => {
+          const matchesSearch =
+            purchase.item_name?.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesCategory =
+            categoryFilter === "all" || purchase.type === categoryFilter;
+          const matchesStatus =
+            statusFilter === "all" || purchase.status === statusFilter;
+          return matchesSearch && matchesCategory && matchesStatus;
+        })
+      : [];
     setFilteredPurchases(filtered_Purchases);
     setLoading(false);
-  }, [purchases]);
+  }, [purchases, searchTerm, categoryFilter, statusFilter]);
   console.log(filteredPurchases);
 
-  const totalRevenue = purchases
-    ? purchases.reduce((sum, purchase) => sum + Math.floor(purchase?.price), 0)
+  const totalRevenue = Array.isArray(purchases)
+    ? purchases.reduce((sum, purchase) => sum + Math.floor(purchase?.price || 0), 0)
     : 0;
-  const packageRevenue = packages
-    ? packages.reduce((sum, pkg) => sum + Math.floor(pkg?.price), 0)
+  const packageRevenue = Array.isArray(packages)
+    ? packages.reduce((sum, pkg) => sum + Math.floor(pkg?.price || 0), 0)
     : 0;
-  const individualServicesRevenue = individualServices
+  const individualServicesRevenue = Array.isArray(individualServices)
     ? individualServices.reduce(
-        (sum, individualService) => sum + Math.floor(individualService?.price),
+        (sum, individualService) => sum + Math.floor(individualService?.price || 0),
         0
       )
     : 0;
-  const comboPackageRevenue = comboPackages
+  const comboPackageRevenue = Array.isArray(comboPackages)
     ? comboPackages.reduce(
-        (sum, comboPackage) => sum + Math.floor(comboPackage?.price),
+        (sum, comboPackage) => sum + Math.floor(comboPackage?.price || 0),
         0
       )
-    : 0;
+    : (comboPackages?.price ? Math.floor(comboPackages.price) : 0);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -329,7 +338,7 @@ export default function ServicePurchases() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredPurchases.map((order) => (
+                {Array.isArray(filteredPurchases) && filteredPurchases.map((order) => (
                   <Card
                     key={order.id}
                     className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
