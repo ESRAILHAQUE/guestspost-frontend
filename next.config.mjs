@@ -9,7 +9,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  output: "export",
+  // Removed 'output: export' to support dynamic auth pages
   webpack: (config) => {
     config.optimization = {
       ...config.optimization,

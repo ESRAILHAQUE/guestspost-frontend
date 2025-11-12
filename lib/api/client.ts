@@ -13,9 +13,64 @@ interface RequestOptions extends RequestInit {
 
 class APIClient {
   private baseURL: string;
+  private isRefreshing: boolean = false;
+  private failedQueue: Array<{
+    resolve: (value: any) => void;
+    reject: (reason?: any) => void;
+  }> = [];
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
+  }
+
+  private processQueue(error: Error | null, token: string | null = null) {
+    this.failedQueue.forEach((prom) => {
+      if (error) {
+        prom.reject(error);
+      } else {
+        prom.resolve(token);
+      }
+    });
+    this.failedQueue = [];
+  }
+
+  private async refreshAccessToken(): Promise<string | null> {
+    if (typeof window === "undefined") return null;
+
+    const refreshToken = localStorage.getItem("refresh-token");
+    if (!refreshToken) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/auth/refresh-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to refresh token");
+      }
+
+      const data = await response.json();
+      const newAccessToken = data.data?.accessToken || data.accessToken;
+      
+      if (newAccessToken) {
+        localStorage.setItem("auth-token", newAccessToken);
+        if (data.data?.refreshToken || data.refreshToken) {
+          localStorage.setItem("refresh-token", data.data?.refreshToken || data.refreshToken);
+        }
+        return newAccessToken;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Token refresh failed:", error);
+      return null;
+    }
   }
 
   private async request<T>(
@@ -69,6 +124,56 @@ class APIClient {
       }
 
       const data = await response.json();
+
+      // Handle 401 Unauthorized - Token expired
+      if (response.status === 401 && (data.message?.includes("Token expired") || data.message?.includes("expired"))) {
+        // Don't refresh on auth endpoints
+        if (endpoint.includes("auth/login") || endpoint.includes("auth/signup") || endpoint.includes("auth/refresh-token")) {
+          throw new Error(data.message || "Authentication failed");
+        }
+
+        // If already refreshing, queue this request
+        if (this.isRefreshing) {
+          return new Promise<T>((resolve, reject) => {
+            this.failedQueue.push({ resolve, reject });
+          }).then(() => {
+            // Retry with new token
+            return this.request<T>(endpoint, options);
+          });
+        }
+
+        this.isRefreshing = true;
+
+        try {
+          const newToken = await this.refreshAccessToken();
+          
+          if (newToken) {
+            this.processQueue(null, newToken);
+            this.isRefreshing = false;
+            // Retry original request with new token
+            return this.request<T>(endpoint, options);
+          } else {
+            // Refresh failed, clear tokens and redirect to login
+            this.processQueue(new Error("Token refresh failed"), null);
+            this.isRefreshing = false;
+            
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("auth-token");
+              localStorage.removeItem("refresh-token");
+              localStorage.removeItem("user_id");
+              localStorage.removeItem("isLoggedIn");
+              localStorage.removeItem("userRole");
+              window.location.href = "/login";
+            }
+            
+            throw new Error("Session expired. Please login again.");
+          }
+        } catch (error) {
+          this.processQueue(error instanceof Error ? error : new Error("Token refresh failed"), null);
+          this.isRefreshing = false;
+          throw error;
+        }
+      }
 
       if (!response.ok) {
         // Handle Node.js backend error format
