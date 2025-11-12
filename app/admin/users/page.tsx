@@ -37,11 +37,17 @@ export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [mounted, setMounted] = useState(false);
   const itemsPerPage = 30;
 
   // Use new API hooks
   const { data: users = [], isLoading, refetch } = useUsers();
   const updateUserMutation = useUpdateUser();
+
+  // Handle client-side mounting to prevent hydration errors
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Memoize filtered users to prevent unnecessary re-renders
   const memoizedFilteredUsers = useMemo(() => {
@@ -174,10 +180,10 @@ export default function AdminUsers() {
             </Button>
             <Button
               onClick={() => refetch()}
-              disabled={isLoading}
+              disabled={mounted ? isLoading : false}
               className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white">
               <RefreshCw
-                className={`h-4 w-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+                className={`h-4 w-4 mr-2 ${mounted && isLoading ? "animate-spin" : ""}`}
               />
               Refresh
             </Button>
@@ -278,13 +284,15 @@ export default function AdminUsers() {
               Users ({filteredUsers.length})
             </CardTitle>
             <CardDescription className="text-gray-300">
-              {isLoading
+              {!mounted
+                ? `Showing ${filteredUsers.length} of ${users.length} users`
+                : isLoading
                 ? "Loading users..."
                 : `Showing ${filteredUsers.length} of ${users.length} users`}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {mounted && isLoading ? (
               <div className="text-center py-8">
                 <RefreshCw className="h-8 w-8 animate-spin text-blue-400 mx-auto mb-4" />
                 <p className="text-gray-300">Loading users...</p>
