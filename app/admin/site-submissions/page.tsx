@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AdminLayout } from "@/components/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,9 +59,6 @@ interface SiteSubmission {
 }
 
 export default function SiteSubmissionsPage() {
-  const [filteredSubmissions, setFilteredSubmissions] = useState<
-    SiteSubmission[]
-  >([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedSubmission, setSelectedSubmission] =
@@ -71,7 +68,8 @@ export default function SiteSubmissionsPage() {
   const { data: submissions = [], isLoading, refetch } = useSiteSubmissions();
   const updateSiteSubmissionMutation = useUpdateSiteSubmission();
 
-  useEffect(() => {
+  // Use useMemo instead of useEffect to prevent infinite loops
+  const filteredSubmissions = useMemo(() => {
     let filtered = submissions;
 
     // Filter by search term
@@ -95,7 +93,7 @@ export default function SiteSubmissionsPage() {
       );
     }
 
-    setFilteredSubmissions(filtered);
+    return filtered;
   }, [submissions, searchTerm, statusFilter]);
 
   const updateSubmissionStatus = async (
