@@ -81,10 +81,10 @@ export default function AdminUsers() {
   ) => {
     try {
       await updateUserMutation.mutateAsync({
-        id: userId,
+        ID: userId, // Must be ID (uppercase) to match the hook's expectation
         user_status: newStatus,
       });
-      toast.success(`Updated user ${userId} status to ${newStatus}`);
+      toast.success(`User status updated to ${newStatus}`);
       refetch(); // Refresh the users list
     } catch (error: any) {
       toast.error(`Error updating user status: ${error.message || error}`);
