@@ -184,7 +184,7 @@ export function UnifiedWebsiteCatalog({
     linkType: "dofollow" | "nofollow" = "dofollow"
   ) => {
     if (!isLoggedIn || !user) {
-      window.location.href = "/signup";
+      window.location.href = "/login";
       return;
     }
 
@@ -311,19 +311,20 @@ export function UnifiedWebsiteCatalog({
   };
 
   const WebsiteSection = ({ tabCategory }: { tabCategory: string }) => {
-    const filteredWebsites = getFilteredWebsites(tabCategory);
+    const filteredWebsites = getFilteredWebsites(tabCategory) || [];
+    const safeFilteredWebsites = Array.isArray(filteredWebsites) ? filteredWebsites : [];
     const totalPages = Math.ceil((Array.isArray(websites) ? websites.length : 0) / itemsPerPage);
 
     return (
       <div className="bg-white">
         <div className="mb-6">
           <p className="text-gray-800">
-            Showing {filteredWebsites.length} websites
+            Showing {safeFilteredWebsites.length} websites
             {hasActiveFilters && " (filtered)"}
           </p>
         </div>
 
-        {filteredWebsites.length > 0 ? (
+        {safeFilteredWebsites.length > 0 ? (
           <div className="w-full overflow-x-auto">
             <div className="min-w-max">
               <Table className="min-w-max">
@@ -343,7 +344,7 @@ export function UnifiedWebsiteCatalog({
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
-                {filteredWebsites.map((website, index) => (
+                {safeFilteredWebsites.map((website, index) => (
                   <WebsiteCard
                     key={`${tabCategory}-${website.id || index}`}
                     website={website}
@@ -351,7 +352,7 @@ export function UnifiedWebsiteCatalog({
                 ))}
               </Table>
             </div>
-            {Array.isArray(filteredWebsites) && filteredWebsites.length > 0 && totalPages > 1 && (
+            {Array.isArray(safeFilteredWebsites) && safeFilteredWebsites.length > 0 && totalPages > 1 && (
               <div className="flex justify-center items-center gap-4 mt-6">
                 <Button
                   onClick={() =>
@@ -546,17 +547,17 @@ export function UnifiedWebsiteCatalog({
             <TabsTrigger
               value="all"
               className="data-[state=active]:bg-blue-500 text-primary/70 bg-primary/10 hover:bg-primary/20 hover:text-primary data-[state=active]:text-white">
-              All Sites ({getFilteredWebsites("all").length})
+              All Sites ({Array.isArray(getFilteredWebsites("all")) ? getFilteredWebsites("all").length : 0})
             </TabsTrigger>
             <TabsTrigger
               value="standard"
               className="data-[state=active]:bg-blue-500 text-primary/70 bg-primary/10 hover:bg-primary/20 hover:text-primary data-[state=active]:text-white">
-              Standard ({getFilteredWebsites("standard").length})
+              Standard ({Array.isArray(getFilteredWebsites("standard")) ? getFilteredWebsites("standard").length : 0})
             </TabsTrigger>
             <TabsTrigger
               value="premium"
               className="data-[state=active]:bg-blue-500 text-primary/70 bg-primary/10 hover:bg-primary/20 hover:text-primary data-[state=active]:text-white">
-              Premium ({getFilteredWebsites("premium").length})
+              Premium ({Array.isArray(getFilteredWebsites("premium")) ? getFilteredWebsites("premium").length : 0})
             </TabsTrigger>
           </TabsList>
 

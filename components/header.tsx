@@ -10,16 +10,29 @@ import { useCurrentUser } from "@/hooks/api/useUsers";
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Use React Query hook instead of manual fetch
   const { data: user, isLoading } = useCurrentUser();
 
   useEffect(() => {
-    const userLoggedIn = localStorage.getItem("isLoggedIn");
-    if (userLoggedIn === "true") {
-      setIsLoggedIn(true);
+    if (typeof window !== "undefined") {
+      const userLoggedIn = localStorage.getItem("isLoggedIn");
+      const role = localStorage.getItem("userRole");
+      if (userLoggedIn === "true") {
+        setIsLoggedIn(true);
+        setUserRole(role);
+      }
     }
   }, []);
+
+  // Determine dashboard URL based on user role
+  const getDashboardUrl = () => {
+    if (userRole === "admin") {
+      return "/admin";
+    }
+    return "/dashboard";
+  };
 
   return (
     <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-blue-900">
@@ -66,13 +79,13 @@ export function Header() {
             </nav>
 
             {isLoggedIn && user ? (
-              <div className="flex items-center space-x-3 pr-10">
+              <div className="flex items-center space-x-3">
                 <Button
-                  variant="ghost"
-                  className="text-white hover:bg-white/10 rounded-full justify-center items-center px-3 md:flex hidden"
+                  className="md:flex hidden bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white items-center gap-2"
                   asChild>
-                  <Link href="/dashboard" className="bg-black/20 text-white">
-                    <User2 size={50} className="w-20" />
+                  <Link href={getDashboardUrl()}>
+                    <User2 size={18} />
+                    {userRole === "admin" ? "Admin Panel" : "Dashboard"}
                   </Link>
                 </Button>
                 <div
@@ -84,15 +97,9 @@ export function Header() {
             ) : (
               <div className="flex items-center md:space-x-3">
                 <Button
-                  variant="ghost"
-                  className="md:block hidden text-white hover:bg-white/10"
-                  asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button
                   className="md:block hidden bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
                   asChild>
-                  <Link href="/signup">Sign Up</Link>
+                  <Link href="/login">Login</Link>
                 </Button>
                 <div
                   onClick={() => setIsMenuOpen(true)}
@@ -139,25 +146,22 @@ export function Header() {
                   </Link>
                 </div>
                 {isLoggedIn && user ? (
-                  <div className="flex items-center space-x-3 pr-10">
+                  <div className="flex items-center space-x-3">
                     <Button
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                      className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white w-full flex items-center gap-2 justify-center"
                       asChild>
-                      <Link href="/dashboard">Dashboard</Link>
+                      <Link href={getDashboardUrl()}>
+                        <User2 size={18} />
+                        {userRole === "admin" ? "Admin Panel" : "Dashboard"}
+                      </Link>
                     </Button>
                   </div>
                 ) : (
                   <div className="flex space-y-3 flex-col">
                     <Button
-                      variant="ghost"
-                      className="text-white hover:bg-white/10 bg-white/20"
-                      asChild>
-                      <Link href="/login">Login</Link>
-                    </Button>
-                    <Button
                       className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
                       asChild>
-                      <Link href="/signup">Sign Up</Link>
+                      <Link href="/login">Login</Link>
                     </Button>
                   </div>
                 )}

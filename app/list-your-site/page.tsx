@@ -85,7 +85,7 @@ export default function ListYourSitePage() {
     setIsSubmitting(true)
 
     if(!user) {
-      router.push('/signup');
+      router.push('/login');
     }
 
     try {
