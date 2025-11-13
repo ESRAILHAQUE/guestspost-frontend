@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -9,11 +9,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, PenTool, Link, Megaphone, Share, FileText, X, ShoppingCart } from "lucide-react"
 import { PurchaseModal } from "@/components/purchase-modal"
+import { endpoints } from "@/lib/api/client"
 
 export default function ServicesPage() {
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<any>(null)
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false)
+  const [servicePackages, setServicePackages] = useState<Record<string, any[]>>({})
+  const [loading, setLoading] = useState(true)
 
   const services = [
     {
@@ -93,7 +96,24 @@ export default function ServicesPage() {
     },
   ]
 
-  const servicePackages = {
+  useEffect(() => {
+    const loadServicePackages = async () => {
+      try {
+        const result = await endpoints.servicePackages.getGroupedServicePackages();
+        if (result.data) {
+          setServicePackages(result.data);
+        }
+      } catch (error) {
+        console.error("Error loading service packages:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadServicePackages();
+  }, []);
+
+  const defaultServicePackages = {
     "article-writing": [
       {
         type: 'service',
@@ -392,7 +412,9 @@ export default function ServicesPage() {
   }
 
   const currentService = services.find((s) => s.id === selectedService)
-  const currentPackages = selectedService ? servicePackages[selectedService as keyof typeof servicePackages] : []
+  const currentPackages = selectedService 
+    ? (servicePackages[selectedService] || defaultServicePackages[selectedService as keyof typeof defaultServicePackages] || [])
+    : []
 
   return (
     <div className="min-h-screen bg-primary/5">

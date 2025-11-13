@@ -550,6 +550,37 @@ export const endpoints = {
       api.delete<{ success: boolean; message: string }>("services/${id}"),
   },
 
+  // Service Packages
+  servicePackages: {
+    getGroupedServicePackages: () =>
+      api.get<{ success: boolean; data: Record<string, any[]>; message: string }>(
+        "service-packages/grouped"
+      ),
+    getServicePackages: (params?: Record<string, any>) =>
+      api.get<{ success: boolean; data: any[]; message: string }>(
+        "service-packages",
+        { params }
+      ),
+    getServicePackage: (id: string) =>
+      api.get<{ success: boolean; data: any; message: string }>(
+        `service-packages/${id}`
+      ),
+    createServicePackage: (pkg: any) =>
+      api.post<{ success: boolean; data: any; message: string }>(
+        "service-packages",
+        pkg
+      ),
+    updateServicePackage: (id: string, pkg: any) =>
+      api.put<{ success: boolean; data: any; message: string }>(
+        `service-packages/${id}`,
+        pkg
+      ),
+    deleteServicePackage: (id: string) =>
+      api.delete<{ success: boolean; message: string }>(
+        `service-packages/${id}`
+      ),
+  },
+
   // Site Submissions
   siteSubmissions: {
     getSiteSubmissions: (params?: Record<string, any>) =>
