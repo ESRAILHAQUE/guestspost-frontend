@@ -127,20 +127,24 @@ export default function BlogPage() {
                 <div className="flex items-center gap-6 text-sm text-primary mb-6">
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-2" />
-                    {selectedPost.post_author}
+                    {selectedPost.post_author || "Unknown"}
                   </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    {new Date(selectedPost.post_date).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }).slice(0)}
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
-                    {selectedPost.post_date_gmt.slice(0, 10)}
-                  </div>
+                  {selectedPost.post_date && (
+                    <div className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {new Date(selectedPost.post_date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </div>
+                  )}
+                  {selectedPost.post_date_gmt && (
+                    <div className="flex items-center">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {selectedPost.post_date_gmt.slice(0, 10)}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -246,20 +250,24 @@ export default function BlogPage() {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center">
                         <User className="w-3 h-3 mr-1" />
-                        {post.post_author}
+                        {post.post_author || "Unknown"}
                       </div>
+                      {post.post_date_gmt && (
+                        <div className="flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {post.post_date_gmt.slice(0, 10)}
+                        </div>
+                      )}
+                    </div>
+                    {post.post_date && (
                       <div className="flex items-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {post.post_date_gmt.slice(0, 10)}
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {new Date(post.post_date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </div>
-                    </div>
-                    <div className="flex items-center">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {new Date(post.post_date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      }).slice(0, 8)}
-                    </div>
+                    )}
                   </div>
 
                   {Array.isArray(post.post_content_filtered) && post.post_content_filtered.length > 0 && (
