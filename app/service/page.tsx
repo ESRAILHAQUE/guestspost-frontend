@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { CheckCircle, Clock, Users, Award, Shield, Zap } from "lucide-react"
+import { endpoints } from "@/lib/api/client"
 
 const iconMap = {
   CheckCircle,
@@ -32,10 +33,9 @@ export default function ServicePage() {
     const loadServices = async () => {
       try {
         // Fetch services from backend API
-        const response = await fetch("http://localhost:5000/api/v1/services/active");
-        const result = await response.json();
+        const result = await endpoints.services.getActiveServices();
         
-        if (result.success && Array.isArray(result.data)) {
+        if (result.data && Array.isArray(result.data)) {
           setServices(result.data);
         } else {
           // Fallback to default services if API fails

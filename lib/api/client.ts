@@ -522,6 +522,34 @@ export const endpoints = {
       ),
   },
 
+  // Services
+  services: {
+    getActiveServices: () =>
+      api.get<{ success: boolean; data: any[]; message: string }>(
+        "services/active"
+      ),
+    getServices: (params?: Record<string, any>) =>
+      api.get<{ success: boolean; data: any[]; message: string }>("services", {
+        params,
+      }),
+    getService: (id: string) =>
+      api.get<{ success: boolean; data: any; message: string }>(
+        `services/${id}`
+      ),
+    createService: (service: any) =>
+      api.post<{ success: boolean; data: any; message: string }>(
+        "services",
+        service
+      ),
+    updateService: (id: string, service: any) =>
+      api.put<{ success: boolean; data: any; message: string }>(
+        `services/${id}`,
+        service
+      ),
+    deleteService: (id: string) =>
+      api.delete<{ success: boolean; message: string }>("services/${id}"),
+  },
+
   // Site Submissions
   siteSubmissions: {
     getSiteSubmissions: (params?: Record<string, any>) =>
