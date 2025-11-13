@@ -29,19 +29,16 @@ export default function ServicePage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Only run on client-side
-    if (typeof window === 'undefined') return;
-
-    const loadServices = () => {
+    const loadServices = async () => {
       try {
-        const savedServices = localStorage.getItem("admin-services")
-        if (savedServices) {
-          const parsedServices = JSON.parse(savedServices)
-          // console.log("Loading services from admin storage:", parsedServices)
-          setServices(Array.isArray(parsedServices) ? parsedServices : [])
+        // Fetch services from backend API
+        const response = await fetch("http://localhost:5000/api/v1/services/active");
+        const result = await response.json();
+        
+        if (result.success && Array.isArray(result.data)) {
+          setServices(result.data);
         } else {
-          // console.log("No admin services found, initializing with default services")
-          // Initialize with the current services displayed on the page
+          // Fallback to default services if API fails
           const defaultServices = [
             {
               id: "1",
@@ -85,8 +82,6 @@ export default function ServicePage() {
             },
           ]
           setServices(defaultServices)
-          // Save to localStorage so admin can manage them
-          localStorage.setItem("admin-services", JSON.stringify(defaultServices))
         }
       } catch (error) {
         console.error("Error loading services:", error)
@@ -97,17 +92,6 @@ export default function ServicePage() {
     }
 
     loadServices()
-
-    // Listen for storage changes to update in real-time
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "admin-services") {
-        // console.log("Services updated in admin panel, reloading...")
-        loadServices()
-      }
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
   }, [])
 
   if (isLoading) {
@@ -142,7 +126,7 @@ export default function ServicePage() {
                 const IconComponent = iconMap[service.icon as keyof typeof iconMap] || CheckCircle
                 return (
                   <Card
-                    key={service.id}
+                    key={service.id || service._id}
                     className="bg-white border-primary/20 hover:bg-primary/5 transition-all duration-300"
                   >
                     <CardContent className="p-6">
