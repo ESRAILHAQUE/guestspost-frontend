@@ -11,20 +11,22 @@ import Image from "next/image"
 import { endpoints } from "@/lib/api/client"
 
 interface BlogPost {
-  ID: string
-  post_title: string
-  post_content: string
-  post_excerpt: string
-  post_author: string
-  post_type: string
-  post_content_filtered: string[]
-  post_date: string
-  post_date_gmt: string
-  post_status: "publish" | "draft" | "trash" | "auto-draft" | "inherit" | "published"
-  post_createdAt: string
-  post_image?: string
-  imageUrl?: string
-  post_link?: string
+  _id?: string
+  id?: string
+  title: string
+  slug: string
+  content: string
+  excerpt?: string
+  author: string
+  authorId?: string
+  category: string
+  tags?: string[]
+  image?: string
+  status?: "draft" | "published" | "archived"
+  views?: number
+  createdAt?: string
+  updatedAt?: string
+  publishedAt?: string
 }
 
 export default function BlogPage() {
@@ -113,36 +115,36 @@ export default function BlogPage() {
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Badge variant="secondary" className="bg-primary text-secondary">
-                    {selectedPost.post_type}
+                    {selectedPost.category}
                   </Badge>
-                  {selectedPost.post_content_filtered && Array.isArray(selectedPost.post_content_filtered) && selectedPost.post_content_filtered.map((tag, index) => (
+                  {selectedPost.tags && Array.isArray(selectedPost.tags) && selectedPost.tags.map((tag, index) => (
                     <Badge key={index} variant="outline" className="bg-primary text-secondary">
                       {tag}
                     </Badge>
                   ))}
                 </div>
 
-                <h1 className="text-4xl font-bold text-primary mb-6 leading-tight">{selectedPost.post_title || "New Post"}</h1>
+                <h1 className="text-4xl font-bold text-primary mb-6 leading-tight">{selectedPost.title || "New Post"}</h1>
 
                 <div className="flex items-center gap-6 text-sm text-primary mb-6">
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-2" />
-                    {selectedPost.post_author || "Unknown"}
+                    {selectedPost.author || "Unknown"}
                   </div>
-                  {selectedPost.post_date && (
+                  {selectedPost.createdAt && (
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 mr-2" />
-                      {new Date(selectedPost.post_date).toLocaleDateString("en-US", {
+                      {new Date(selectedPost.createdAt).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
                       })}
                     </div>
                   )}
-                  {selectedPost.post_date_gmt && (
+                  {selectedPost.publishedAt && (
                     <div className="flex items-center">
                       <Clock className="w-4 h-4 mr-2" />
-                      {selectedPost.post_date_gmt.slice(0, 10)}
+                      {new Date(selectedPost.publishedAt).toLocaleDateString()}
                     </div>
                   )}
                 </div>
@@ -150,28 +152,21 @@ export default function BlogPage() {
 
               {/* Featured image */}
 
-              {(selectedPost.post_image ) && (
+              {selectedPost.image && (
                 <div className="flex flex-col items-center gap-4 text-xs text-gray-500 mt-2">
-                  {selectedPost.post_image && (
-                    <div className="flex items-center">
-                      <Image src={
-                        selectedPost.post_image.startsWith('https://') || selectedPost.post_image.startsWith('http://')
-                          ? selectedPost.post_image
-                          : `/guestpost-backend/${encodeURIComponent(selectedPost.post_image)}`
-                      } alt='image' width={400} height={400} className="h-auto w-auto" />
-                    </div>
-                  )}
-                  {/* {selectedPost.imageUrl && (
-                    <div className="flex items-center">
-                      <Image src={selectedPost.imageUrl} alt='image' width={400} height={400} className="h-auto w-auto" />
-                    </div>
-                  )} */}
+                  <div className="flex items-center">
+                    <Image src={
+                      selectedPost.image.startsWith('https://') || selectedPost.image.startsWith('http://')
+                        ? selectedPost.image
+                        : `/guestpost-backend/${encodeURIComponent(selectedPost.image)}`
+                    } alt='image' width={400} height={400} className="h-auto w-auto" />
+                  </div>
                 </div>
               )}
               {/* Article content */}
               <div
                 className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(selectedPost.post_content) }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(selectedPost.content) }}
               />
             </article>
           </div>
@@ -204,65 +199,58 @@ export default function BlogPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {Array.isArray(posts) && posts.map((post) => (
+            {Array.isArray(posts) && posts.map((post, index) => (
               <Card
-                key={1}
+                key={post._id || post.id || index}
                 className="bg-primary/10 border-gray-500/20 hover:bg-primary/5 hover:border-gray-500/40 transition-all duration-300 cursor-pointer overflow-hidden group"
                 onClick={() => setSelectedPost(post)}
               >
                 {/* Featured image */}
-                {(post.post_image) && (
+                {post.image && (
                   <div className="flex flex-col items-center gap-4 text-xs text-gray-500 mt-2">
-                    {post.post_image && (
-                      <div className="flex items-center">
-                        <Image src={
-                                post.post_image.startsWith('https://') || post.post_image.startsWith('http://')
-                                  ? post.post_image
-                                  : `/guestpost-backend/${encodeURIComponent(post.post_image)}`
-                              } alt='image' width={400} height={400} className="h-auto w-auto" />
-                      </div>
-                    )}
-                    {/* {post.imageUrl && (
-                      <div className="flex items-center">
-                        <Image src={post.imageUrl} alt='image' width={400} height={400} className="h-auto w-auto" />
-                      </div>
-                    )} */}
+                    <div className="flex items-center">
+                      <Image src={
+                              post.image.startsWith('https://') || post.image.startsWith('http://')
+                                ? post.image
+                                : `/guestpost-backend/${encodeURIComponent(post.image)}`
+                            } alt='image' width={400} height={400} className="h-auto w-auto" />
+                    </div>
                   </div>
                 )}
 
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2 mb-3">
                     <Badge variant="secondary" className="bg-primary text-secondary text-xs">
-                      {post.post_type}
+                      {post.category}
                     </Badge>
                   </div>
                   <CardTitle className="text-xl font-bold text-primary line-clamp-2 transition-colors">
-                    {post.post_title || "New Post"}
+                    {post.title || "New Post"}
                   </CardTitle>
                 </CardHeader>
 
                 <CardContent className="pt-0">
                   <p className="text-gray-800 mb-4 line-clamp-3 text-sm leading-relaxed">
-                    {post.post_excerpt}
+                    {post.excerpt}
                   </p>
 
                   <div className="flex items-center justify-between text-xs text-primary">
                     <div className="flex items-center gap-4">
                       <div className="flex items-center">
                         <User className="w-3 h-3 mr-1" />
-                        {post.post_author || "Unknown"}
+                        {post.author || "Unknown"}
                       </div>
-                      {post.post_date_gmt && (
+                      {post.publishedAt && (
                         <div className="flex items-center">
                           <Clock className="w-3 h-3 mr-1" />
-                          {post.post_date_gmt.slice(0, 10)}
+                          {new Date(post.publishedAt).toLocaleDateString()}
                         </div>
                       )}
                     </div>
-                    {post.post_date && (
+                    {post.createdAt && (
                       <div className="flex items-center">
                         <Calendar className="w-3 h-3 mr-1" />
-                        {new Date(post.post_date).toLocaleDateString("en-US", {
+                        {new Date(post.createdAt).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                         })}
@@ -270,16 +258,16 @@ export default function BlogPage() {
                     )}
                   </div>
 
-                  {Array.isArray(post.post_content_filtered) && post.post_content_filtered.length > 0 && (
+                  {Array.isArray(post.tags) && post.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-3">
-                      {Array.isArray(post.post_content_filtered) && post.post_content_filtered.slice(0, 3).map((tag, index) => (
+                      {post.tags.slice(0, 3).map((tag, index) => (
                         <Badge key={index} variant="outline" className="text-xs text-secondary bg-primary">
                           {tag}
                         </Badge>
                       ))}
-                      {Array.isArray(post.post_content_filtered) && post.post_content_filtered.length > 3 && (
+                      {post.tags.length > 3 && (
                         <Badge variant="outline" className="text-xs text-secondary bg-primary">
-                          +{post.post_content_filtered.length - 3}
+                          +{post.tags.length - 3}
                           more
                         </Badge>
                       )}

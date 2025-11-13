@@ -29,13 +29,16 @@ export default function ServicePage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') return;
+
     const loadServices = () => {
       try {
         const savedServices = localStorage.getItem("admin-services")
         if (savedServices) {
           const parsedServices = JSON.parse(savedServices)
           // console.log("Loading services from admin storage:", parsedServices)
-          setServices(parsedServices)
+          setServices(Array.isArray(parsedServices) ? parsedServices : [])
         } else {
           // console.log("No admin services found, initializing with default services")
           // Initialize with the current services displayed on the page

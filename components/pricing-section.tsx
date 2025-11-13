@@ -207,7 +207,7 @@ export function PricingSection() {
               </CardHeader>
               <CardContent className="pt-0">
                 <ul className="space-y-4 mb-8">
-                  {pkg.features.map((feature, index) => (
+                  {Array.isArray(pkg.features) && pkg.features.map((feature, index) => (
                     <li key={index} className="flex items-start">
                       <CheckCircle className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
                       <span className="text-gray-800">{feature}</span>

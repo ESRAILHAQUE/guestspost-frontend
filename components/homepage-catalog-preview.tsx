@@ -172,9 +172,12 @@ export function HomepageCatalogPreview() {
 
   // Load admin websites from localStorage
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const savedWebsites = localStorage.getItem("admin-websites")
     if (savedWebsites) {
-      setAdminWebsites(JSON.parse(savedWebsites))
+      const parsed = JSON.parse(savedWebsites)
+      setAdminWebsites(Array.isArray(parsed) ? parsed : [])
     }
   }, [])
 
