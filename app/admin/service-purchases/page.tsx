@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { endpoints } from "@/lib/api/client";
 
 export default function ServicePurchases() {
   const [searchTerm, setSearchTerm] = useState("");
