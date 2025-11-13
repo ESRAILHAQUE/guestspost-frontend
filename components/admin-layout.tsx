@@ -22,6 +22,8 @@ import {
   Star,
   Package,
   MessageCircleMoreIcon,
+  Briefcase,
+  Boxes,
 } from "lucide-react";
 
 const navigation = [
@@ -42,6 +44,16 @@ const navigation = [
     name: "Package Management",
     href: "/admin/package-management",
     icon: Package,
+  },
+  {
+    name: "Service Management",
+    href: "/admin/service-management",
+    icon: Briefcase,
+  },
+  {
+    name: "Service Packages",
+    href: "/admin/service-package-management",
+    icon: Boxes,
   },
   { name: "Client Reviews", href: "/admin/client-reviews", icon: Star },
   { name: "Blog Management", href: "/admin/blog-management", icon: BookOpen },
